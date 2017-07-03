@@ -1,0 +1,15 @@
+data_dir: &DIR ../data/tweets-10k/
+
+# preprocessing
+raw_data_file: /shared/data/czhang82/source/sample-tweets-10k/clean/tweets.txt
+grid_list: [100, 100]
+train_ratio: 0.9
+min_token_freq: 100
+
+# training
+train_data_file: !join [*DIR, input/train.txt]
+test_data_file: !join [*DIR, input/test.txt]
+x_vocab_file: !join [*DIR, input/words.txt]
+y_vocab_file: !join [*DIR, input/locations.txt]
+embedding_dim: 300
+n_epoch: 10

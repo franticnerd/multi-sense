@@ -1,0 +1,15 @@
+data_dir: &DIR ../data/toy/
+
+# preprocessing
+raw_data_file: /Users/chao/data/source/tweets-dev/clean/tweets.txt
+grid_list: [100, 100]
+train_ratio: 0.8
+min_token_freq: 5
+
+# training
+train_data_file: !join [*DIR, input/train.txt]
+test_data_file: !join [*DIR, input/test.txt]
+x_vocab_file: !join [*DIR, input/words.txt]
+y_vocab_file: !join [*DIR, input/locations.txt]
+embedding_dim: 10
+n_epoch: 5
