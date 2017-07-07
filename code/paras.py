@@ -37,7 +37,7 @@ def set_default_params():
     pd['test_data_file'] = pd['data_dir'] + 'input/test.txt'
     pd['x_vocab_file'] = pd['data_dir'] + 'input/words.txt'
     pd['y_vocab_file'] = pd['data_dir'] + 'input/locations.txt'
-    pd['embedding_dim'] = 10
-    pd['n_epoch'] = 5
+    pd['embedding_dim'] = 2
+    pd['n_epoch'] = 10
     pd['model_dir'] = pd['data_dir'] + 'model/'
     return pd

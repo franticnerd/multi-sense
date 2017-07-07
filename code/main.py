@@ -8,6 +8,7 @@ from paras import load_params
 from evaluator import evaluate
 from dataset import RelationDataset, Vocab
 from models.cbow import CBOW
+from models.attn_net import AttnNet
 
 torch.manual_seed(1)
 
@@ -20,8 +21,9 @@ def load_data(train_data_file, test_data_file, x_vocab_file, y_vocab_file):
     return train_data, test_data, x_vocab, y_vocab
 
 
-def build_cbow_model(x_vocab_size, embedding_dim, y_vocab_size):
-    return CBOW(x_vocab_size, embedding_dim, y_vocab_size)
+def build_model(x_vocab_size, embedding_dim, y_vocab_size):
+    # return CBOW(x_vocab_size, embedding_dim, y_vocab_size)
+    return AttnNet(x_vocab_size, embedding_dim, y_vocab_size)
 
 
 def main(pd):
@@ -29,9 +31,9 @@ def main(pd):
                                                         pd['test_data_file'],
                                                         pd['x_vocab_file'],
                                                         pd['y_vocab_file'])
-    cbow = build_cbow_model(x_vocab.size(), pd['embedding_dim'], y_vocab.size())
+    model = build_model(x_vocab.size(), pd['embedding_dim'], y_vocab.size())
     criterion = nn.NLLLoss()
-    optimizer = optim.SGD(cbow.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     n_epoch = pd['n_epoch']
 
     start = time.time()
@@ -44,7 +46,7 @@ def main(pd):
             inputs = Variable(torch.LongTensor(inputs))
             labels = Variable(torch.LongTensor(labels))
             # forward
-            outputs = cbow(inputs)
+            outputs = model(inputs)
             loss = criterion(outputs, labels)
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -53,13 +55,15 @@ def main(pd):
             optimizer.step()
             # print statistics
             running_loss += loss.data[0]
-            if (i + 1) % 2000 == 0:
-                print('[%d, %5d]  training loss: %.3f' % (epoch+1, i+1, running_loss/2000))
+            if (i + 1) % 500 == 0:
+                print('[%d, %5d]  training loss: %.3f' % (epoch+1, i+1, running_loss/500))
                 running_loss = 0.0
     end = time.time()
+    for p in model.parameters():
+        print p
     print 'Total training time:', end - start
     # evaluate
-    metrics = evaluate(test_data, cbow)
+    metrics = evaluate(test_data, model)
     print 'Performance on test data: ', '\t'.join(str(e) for e in metrics)
 
 
