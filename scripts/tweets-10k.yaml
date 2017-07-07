@@ -1,10 +1,10 @@
-data_dir: &DIR ../data/tweets-10k/
+data_dir: &DIR ../data/tweets-100k/
 
 # preprocessing
-raw_data_file: /shared/data/czhang82/source/sample-tweets-10k/clean/tweets.txt
-grid_list: [100, 100]
+raw_data_file: /shared/data/czhang82/source/sample-tweets-100k/clean/tweets.txt
+grid_list: [50, 50]
 train_ratio: 0.9
-min_token_freq: 100
+min_token_freq: 20
 
 # training
 train_data_file: !join [*DIR, input/train.txt]
