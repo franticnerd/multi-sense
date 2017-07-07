@@ -37,7 +37,11 @@ def set_default_params():
     pd['test_data_file'] = pd['data_dir'] + 'input/test.txt'
     pd['x_vocab_file'] = pd['data_dir'] + 'input/words.txt'
     pd['y_vocab_file'] = pd['data_dir'] + 'input/locations.txt'
-    pd['embedding_dim'] = 2
+    pd['multi_sense'] = True
+    pd['n_sense'] = 2
+    # model and training opts
+    # pd['model_type'] = 'cbow'
+    pd['model_type'] = 'sense_net'
+    pd['embedding_dim'] = 3
     pd['n_epoch'] = 10
-    pd['model_dir'] = pd['data_dir'] + 'model/'
     return pd
