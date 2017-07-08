@@ -5,9 +5,9 @@ import random
 from random import randint
 from utils import format_list_to_string
 
-random.seed(1)
 
 def evaluate(test_data, model):
+    random.seed(1)
     num_correct, ranks, pool_ranks = 0, [], []
     for i in xrange(len(test_data)):
         features, ground_truth = test_data[i]
@@ -24,7 +24,6 @@ def evaluate(test_data, model):
     mr_pool = np.mean(pool_ranks)
     mrr_pool = np.mean([1.0/r for r in pool_ranks])
     return accuracy, mr_full, mrr_full, mr_pool, mrr_pool
-
 
 
 # check whether the ground truth appears in the top-K list, for computing the hit ratio
@@ -71,10 +70,5 @@ def print_metrics(accuracy, mr_full, mrr_full, mr_pool, mrr_pool):
                ('mr_pool:', mr_pool),
                ('mrr_pool:', mrr_pool)]
     print format_list_to_string(content)
-
-
-# a = torch.LongTensor([5])
-# b = torch.FloatTensor([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]])
-# print get_groundtruth_rank_pool(a, b, num_cand=3)
 
 

@@ -17,7 +17,8 @@ performance_file:  !join [*DIR, output/performance.txt]
 
 n_sense: 2
 embedding_dim: 5
-n_epoch: 20
+n_epoch: 10
 
 # model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
+# model_type_list: ['comp_attn_sense_net', 'attn_net', 'sense_net', 'attn_sense_net', 'cbow']
 model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']

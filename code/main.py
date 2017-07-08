@@ -12,7 +12,6 @@ from models.cbow import CBOW
 from models.attn_net import AttnNet, SenseNet, AttnSenseNet, CompAttnSenseNet
 from utils import format_list_to_string, ensure_directory_exist
 
-torch.manual_seed(1)
 
 
 def load_data(model_type, pd):
@@ -111,6 +110,7 @@ def print_model_parameters(model):
 
 def main(pd):
     for model_type in pd['model_type_list']:
+        torch.manual_seed(1)
         train_data, test_data, x_vocab, y_vocab = load_data(model_type, pd)
         model = build_model(x_vocab.size(), y_vocab.size(), model_type, pd)
         criterion = nn.NLLLoss()
