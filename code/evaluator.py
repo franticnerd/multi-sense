@@ -3,6 +3,7 @@ import torch
 from torch.autograd import Variable
 import random
 from random import randint
+from utils import format_list_to_string
 
 random.seed(1)
 
@@ -64,15 +65,16 @@ def get_groundtruth_rank_pool(ground_truth, output, num_cand=10):
 
 
 def print_metrics(accuracy, mr_full, mrr_full, mr_pool, mrr_pool):
-    print 'accuracy: ', accuracy
-    print 'mean rank (full data): ', mr_full
-    print 'mrr (full data): ', mrr_full
-    print 'mean rank (candidate pool): ', mr_pool
-    print 'mrr (candidate pool): ', mrr_pool
+    content = [('accuracy:', accuracy),
+               ('mr_full:', mr_full),
+               ('mrr_full:', mrr_full),
+               ('mr_pool:', mr_pool),
+               ('mrr_pool:', mrr_pool)]
+    print format_list_to_string(content)
 
 
-a = torch.LongTensor([5])
-b = torch.FloatTensor([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]])
-print get_groundtruth_rank_pool(a, b, num_cand=3)
+# a = torch.LongTensor([5])
+# b = torch.FloatTensor([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]])
+# print get_groundtruth_rank_pool(a, b, num_cand=3)
 
 

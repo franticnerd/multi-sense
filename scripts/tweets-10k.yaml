@@ -12,10 +12,12 @@ test_data_file: !join [*DIR, input/test.txt]
 x_vocab_file: !join [*DIR, input/words.txt]
 y_vocab_file: !join [*DIR, input/locations.txt]
 
-multi_sense: True
-n_sense: 2
+train_log_file: !join [*DIR, output/train_log.txt]
+performance_file:  !join [*DIR, output/performance.txt]
 
-# model_type: 'cbow'
-model_type: 'attn_net'
+n_sense: 2
 embedding_dim: 5
-n_epoch: 50
+n_epoch: 20
+
+# model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
+model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']

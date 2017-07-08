@@ -1,5 +1,6 @@
 import yaml
 from collections import defaultdict
+from utils import format_list_to_string
 
 class yaml_loader:
     def __init__(self):
@@ -37,11 +38,22 @@ def set_default_params():
     pd['test_data_file'] = pd['data_dir'] + 'input/test.txt'
     pd['x_vocab_file'] = pd['data_dir'] + 'input/words.txt'
     pd['y_vocab_file'] = pd['data_dir'] + 'input/locations.txt'
-    pd['multi_sense'] = True
+    pd['train_log_file'] = pd['data_dir'] + 'output/train_log.txt'
+    pd['performance_file'] = pd['data_dir'] + 'output/performance.txt'
     pd['n_sense'] = 2
     # model and training opts
     # pd['model_type'] = 'cbow'
-    pd['model_type'] = 'sense_net'
-    pd['embedding_dim'] = 3
+    pd['model_type_list'] = ['cbow', 'attn_net']
+    # pd['model_type'] = 'attn_net'
+    pd['embedding_dim'] = 2
     pd['n_epoch'] = 10
     return pd
+
+
+def print_config(pd):
+    content = [('model_type:', pd['model_type']),
+               ('data_dir:', pd['data_dir']),
+               ('embedding_dim:', pd['embedding_dim']),
+               ('n_epoch:', pd['n_epoch'])]
+    print format_list_to_string(content)
+
