@@ -16,6 +16,7 @@ multi_sense: True
 n_sense: 2
 
 # model_type: 'cbow'
-model_type: 'attn_net'
-embedding_dim: 5
-n_epoch: 50
+# model_type: 'attn_net'
+model_type: 'sense_net'
+embedding_dim: 200
+n_epoch: 10
