@@ -13,7 +13,6 @@ from models.attn_net import AttnNet, SenseNet, AttnSenseNet, CompAttnSenseNet
 from utils import format_list_to_string, ensure_directory_exist
 
 
-
 def load_data(model_type, pd):
     multi_sense, n_sense = set_sense_paras(model_type, pd)
     train_data = RelationDataset(pd['train_data_file'], multi_sense, n_sense)
@@ -107,8 +106,17 @@ def print_model_parameters(model):
     for p in model.parameters():
         print p
 
+def set_num_threads(n_thread):
+    torch.set_num_threads(n_thread)
+    os.putenv('MKL_NUM_THREADS', str(n_thread))
+    os.putenv('OMP_NUM_THREADS', str(n_thread))
+    print torch.set_num_threads(n_thread)
+    os.system('echo $MKL_NUM_THREADS')
+    os.system('echo $OMP_NUM_THREADS')
+
 
 def main(pd):
+    set_num_threads(pd['n_thread'])
     for model_type in pd['model_type_list']:
         torch.manual_seed(1)
         train_data, test_data, x_vocab, y_vocab = load_data(model_type, pd)

@@ -4,7 +4,8 @@ config='tweets-10k.yaml'
 # python ../code/preprocess.py $config
 
 # Run
-# OMP_NUM_THREADS=10
+# export MKL_NUM_THREADS=4
+# export OMP_NUM_THREADS=4
 python ../code/main.py $config
 
 # Postprocesing results

@@ -46,10 +46,11 @@ def set_default_params():
     # pd['model_type_list'] = ['cbow']
     # pd['model_type_list'] = ['comp_attn_sense_net']
     # pd['model_type_list'] = ['cbow', 'comp_attn_sense_net']
-    pd['model_type_list'] = ['comp_attn_sense_net', 'cbow']
+    pd['model_type_list'] = ['cbow']
     # pd['model_type'] = 'attn_net'
     pd['embedding_dim'] = 2
     pd['n_epoch'] = 10
+    pd['n_thread'] = 1
     return pd
 
 
