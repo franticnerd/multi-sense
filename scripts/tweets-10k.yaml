@@ -14,7 +14,6 @@ y_vocab_file: !join [*DIR, input/locations.txt]
 
 train_log_file: !join [*DIR, output/train_log.txt]
 performance_file:  !join [*DIR, output/performance.txt]
-n_thread: 1
 
 n_sense: 2
 embedding_dim: 5
