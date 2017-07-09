@@ -8,7 +8,7 @@ class AttnNet(nn.Module):
         super(AttnNet, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
-        # self.attn = nn.Parameter(torch.Tensor(embedding_dim, 1))
+        # self.attn = nn.Parameter(torch.randn(embedding_dim, 1))
         self.attn = nn.Linear(embedding_dim, 1)
         self.attn_softmax = nn.Softmax()
     def forward(self, inputs):

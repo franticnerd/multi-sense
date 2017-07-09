@@ -71,4 +71,3 @@ def print_metrics(accuracy, mr_full, mrr_full, mr_pool, mrr_pool):
                ('mrr_pool:', mrr_pool)]
     print format_list_to_string(content)
 
-

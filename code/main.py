@@ -15,11 +15,22 @@ from utils import format_list_to_string, ensure_directory_exist
 
 def load_data(model_type, pd):
     multi_sense, n_sense = set_sense_paras(model_type, pd)
+    x_vocab = Vocab(pd['x_vocab_file'], multi_sense, n_sense)
+    # y_vocab = Vocab(pd['y_vocab_file'], multi_sense, n_sense)
+    y_vocab = Vocab(pd['y_vocab_file'], False, 1)
     train_data = RelationDataset(pd['train_data_file'], multi_sense, n_sense)
     test_data = RelationDataset(pd['test_data_file'], multi_sense, n_sense)
+    return train_data, test_data, x_vocab, y_vocab
+
+
+def load_data_neg(model_type, pd):
+    multi_sense, n_sense = set_sense_paras(model_type, pd)
     x_vocab = Vocab(pd['x_vocab_file'], multi_sense, n_sense)
     y_vocab = Vocab(pd['y_vocab_file'], multi_sense, n_sense)
-    return train_data, test_data, x_vocab, y_vocab
+    # train_data = RelationDataset(pd['train_data_file'], multi_sense, n_sense)
+    test_data = RelationDataset(pd['test_data_file'], multi_sense, n_sense)
+    test_data.gen_multinomial_dist(y_vocab.size())
+    # return train_data, test_data, x_vocab, y_vocab
 
 
 # set the sense parameters based on model type
@@ -125,7 +136,29 @@ def main(pd):
         write_performance(pd, model_type, metrics, train_time)
 
 
+
+# negative sampling
+def main_ns(pd):
+    for model_type in pd['model_type_list']:
+        torch.manual_seed(1)
+        train_data, test_data, x_vocab, y_vocab = load_data_neg(model_type, pd)
+        # model = build_model(x_vocab.size(), y_vocab.size(), model_type, pd)
+        # criterion = nn.NLLLoss()
+        # # criterion = nn.CrossEntropyLoss()
+        # optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        # # train
+        # start = time.time()
+        # train(train_data, model, criterion, optimizer, model_type, pd)
+        # end = time.time()
+        # train_time = end - start
+        # # evaluate
+        # metrics = evaluate(test_data, model)
+        # write_performance(pd, model_type, metrics, train_time)
+
+
+
 if __name__ == '__main__':
     para_file = None if len(sys.argv) <= 1 else sys.argv[1]
     pd = load_params(para_file)  # load parameters as a dict
     main(pd)
+    # main_ns(pd)

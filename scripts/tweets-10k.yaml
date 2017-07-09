@@ -15,10 +15,11 @@ y_vocab_file: !join [*DIR, input/locations.txt]
 train_log_file: !join [*DIR, output/train_log.txt]
 performance_file:  !join [*DIR, output/performance.txt]
 
-n_sense: 2
+n_sense: 3
 embedding_dim: 5
-n_epoch: 10
+n_epoch: 100
 
 # model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
 # model_type_list: ['comp_attn_sense_net', 'attn_net', 'sense_net', 'attn_sense_net', 'cbow']
+# model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
 model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
