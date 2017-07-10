@@ -2,6 +2,7 @@ import time
 import sys
 import os
 import torch
+import math
 import torch.nn as nn
 import torch.optim as optim
 from loss import NSNLLLoss
@@ -108,6 +109,10 @@ def train_neg(train_data, model, criterion, optimizer, model_type, pd):
                 labels = Variable(torch.LongTensor(labels))
                 output = model(inputs, labels)
                 loss = criterion(output)
+                if math.isnan(loss.data[0]):
+                    print inputs, labels
+                    print output
+                    sys.exit(1)
                 # zero the parameter gradients
                 optimizer.zero_grad()
                 # backward + optimize
