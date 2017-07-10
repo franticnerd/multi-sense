@@ -3,6 +3,7 @@ import sys
 import os
 import torch
 import math
+import numpy.random as nprd
 import torch.nn as nn
 import torch.optim as optim
 from loss import NSNLLLoss
@@ -109,10 +110,6 @@ def train_neg(train_data, model, criterion, optimizer, model_type, pd):
                 labels = Variable(torch.LongTensor(labels))
                 output = model(inputs, labels)
                 loss = criterion(output)
-                if math.isnan(loss.data[0]):
-                    print inputs, labels
-                    print output
-                    sys.exit(1)
                 # zero the parameter gradients
                 optimizer.zero_grad()
                 # backward + optimize
@@ -156,6 +153,7 @@ def read_first_line(perf_file):
 def main(pd):
     for model_type in pd['model_type_list']:
         torch.manual_seed(1)
+        nprd.seed(1)
         train_data, test_data, x_vocab, y_vocab = load_data(model_type, pd)
         model = build_model(x_vocab.size(), y_vocab.size(), model_type, pd)
         # criterion = nn.BCELoss()

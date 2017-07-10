@@ -27,7 +27,8 @@ def load_params(para_file):
 
 def set_default_params():
     pd = dict()
-    pd['data_dir'] = '../data/toy/'
+    # pd['data_dir'] = '../data/toy/'
+    pd['data_dir'] = '../data/tweets-100k/'
     # for preprocessing
     pd['raw_data_file'] = '/Users/chao/data/source/tweets-dev/clean/tweets.txt'
     pd['grid_list'] = [100, 100]
@@ -49,9 +50,10 @@ def set_default_params():
     # pd['model_type_list'] = ['cbow']
     pd['model_type_list'] = ['cbow']
     # pd['model_type'] = 'attn_net'
-    pd['embedding_dim'] = 2
-    pd['n_epoch'] = 10
-    pd['n_thread'] = 1
+    pd['embedding_dim'] = 100
+    pd['n_epoch'] = 50
+    # pd['embedding_dim'] = 2
+    # pd['n_epoch'] = 10
     return pd
 
 

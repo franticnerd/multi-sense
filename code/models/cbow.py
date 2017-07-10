@@ -25,6 +25,7 @@ class CBOWNEG(nn.Module):
         self.embeder_y = nn.Embedding(output_vocab_size, embedding_dim)
     def forward(self, inputs, labels):
         x_embeds = self.embeder_x(inputs)
+        # print self.embeder_x.weight[6]
         x_mean = torch.mean(x_embeds, dim=0)
         y_embeds = self.embeder_y(labels).transpose(0, 1)
         similarities = torch.mm(x_mean, y_embeds)
