@@ -2,8 +2,13 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 from collections import Counter
 import numpy as np
+import numpy.random as nprd
+import time
+
 
 class RelationDataset(Dataset):
+
+    sampling_time = 0.0
 
     def __init__(self, data_file, multi_sense=False, n_sense = 1):
         self.instances = pd.read_table(data_file, header=None)
@@ -26,20 +31,24 @@ class RelationDataset(Dataset):
         weights = np.zeros(n_label)
         y_labels = self.instances.ix[:, 0].tolist()
         counter = Counter(y_labels)
-        print weights
         for idx in counter:
             count = counter[idx]
             weights[idx] = count
-        print weights
-        print sum(weights)
-        weights = weights / sum(weights)
-        print weights
+        self.weights = weights / sum(weights)
 
 
     # get negative samples for y
-    def sample_negatives(self):
-        pass
-
+    def sample_negatives(self, n_sample, tgt_idx):
+        start = time.time()
+        n_label = len(self.weights)
+        ret = []
+        while len(ret) < n_sample:
+            rand_idx = nprd.choice(n_label, p=self.weights)
+            if rand_idx != tgt_idx:
+                ret.append(rand_idx)
+        end = time.time()
+        RelationDataset.sampling_time += (end - start)
+        return ret
 
 
 class Vocab():
@@ -55,11 +64,19 @@ class Vocab():
         self.multi_sense = multi_sense
         self.n_sense = n_sense
 
+
     def size(self):
-        return len(self.id_to_description) * self.n_sense
+        if self.multi_sense:
+            return len(self.id_to_description) * self.n_sense
+        else:
+            return len(self.id_to_description)
+
 
     def get_description(self, id):
-        return self.id_to_description[id / self.n_sense]
+        if self.multi_sense:
+            return self.id_to_description[id / self.n_sense]
+        else:
+            return self.id_to_description[id]
 
 
 def load_data(data_file, multi_sense=False, n_sense=1):
