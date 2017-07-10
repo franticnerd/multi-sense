@@ -105,7 +105,6 @@ def train_neg(train_data, model, criterion, optimizer, model_type, pd):
                 inputs = Variable(torch.LongTensor(inputs))
                 noise_labels = train_data.sample_negatives(5, labels[0])
                 labels.extend(noise_labels)
-                print labels
                 labels = Variable(torch.LongTensor(labels))
                 output = model(inputs, labels)
                 loss = criterion(output)
@@ -138,7 +137,6 @@ def write_performance(pd, model_type, metrics, train_time):
         if file_header != header_string:
             fout.write(header_string + '\n')
         fout.write(content_string + '\n')
-
 
 
 def read_first_line(perf_file):
