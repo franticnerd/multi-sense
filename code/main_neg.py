@@ -4,6 +4,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from loss import NSNLLLoss
 from torch.autograd import Variable
 from paras import load_params
 from eval_neg import evaluate_neg
@@ -48,7 +49,49 @@ def build_model(x_vocab_size, y_vocab_size, model_type, pd):
         return None
 
 
-def train(train_data, model, criterion, optimizer, model_type, pd):
+# def train(train_data, model, criterion, optimizer, model_type, pd):
+#     n_epoch = pd['n_epoch']
+#     train_log_file = pd['train_log_file']
+#     ensure_directory_exist(train_log_file)
+#     with open(train_log_file, 'a') as fout:
+#         # train
+#         for epoch in xrange(n_epoch):
+#             running_loss = 0.0
+#             for i in xrange(len(train_data)):
+#                 # get the input
+#                 inputs, label = train_data[i]
+#                 inputs = Variable(torch.LongTensor(inputs))
+#                 noise_labels = train_data.sample_negatives(5, label)
+#                 output = model(inputs, Variable(torch.LongTensor(label)))
+#                 target = torch.autograd.Variable(torch.Tensor([0.99]))
+#                 loss = criterion(output, target)
+#                 # zero the parameter gradients
+#                 optimizer.zero_grad()
+#                 # backward + optimize
+#                 loss.backward()
+#                 optimizer.step()
+#                 # print statistics
+#                 running_loss += loss.data[0]
+#                 xx = output.data[0]
+#                 for nl in noise_labels:
+#                     output = model(inputs, Variable(torch.LongTensor([nl])))
+#                     yy = output.data[0]
+#                     loss = criterion(output, torch.autograd.Variable(torch.Tensor([0.01])))
+#                     # zero the parameter gradients
+#                     optimizer.zero_grad()
+#                     # backward + optimize
+#                     loss.backward()
+#                     optimizer.step()
+#                     # print statistics
+#                     running_loss += loss.data[0]
+#                 if (i + 1) % 2000 == 0:
+#                     print xx, yy
+#                     print('%20s [%d, %5d]  training loss: %.3f' % (model_type, epoch+1, i+1, running_loss/2000))
+#                     fout.write('%20s [%d, %5d]  training loss: %.3f\n' % (model_type, epoch+1, i+1, running_loss/20))
+#                     running_loss = 0.0
+
+
+def train_neg(train_data, model, criterion, optimizer, model_type, pd):
     n_epoch = pd['n_epoch']
     train_log_file = pd['train_log_file']
     ensure_directory_exist(train_log_file)
@@ -58,13 +101,14 @@ def train(train_data, model, criterion, optimizer, model_type, pd):
             running_loss = 0.0
             for i in xrange(len(train_data)):
                 # get the input
-                inputs, label = train_data[i]
+                inputs, labels = train_data[i]
                 inputs = Variable(torch.LongTensor(inputs))
-                noise_labels = train_data.sample_negatives(5, label)
-
-                output = model(inputs, Variable(torch.LongTensor(label)))
-                target = torch.autograd.Variable(torch.Tensor([0.99]))
-                loss = criterion(output, target)
+                noise_labels = train_data.sample_negatives(5, labels[0])
+                labels.extend(noise_labels)
+                print labels
+                labels = Variable(torch.LongTensor(labels))
+                output = model(inputs, labels)
+                loss = criterion(output)
                 # zero the parameter gradients
                 optimizer.zero_grad()
                 # backward + optimize
@@ -72,23 +116,7 @@ def train(train_data, model, criterion, optimizer, model_type, pd):
                 optimizer.step()
                 # print statistics
                 running_loss += loss.data[0]
-                xx = output.data[0]
-
-
-                for nl in noise_labels:
-                    output = model(inputs, Variable(torch.LongTensor([nl])))
-                    yy = output.data[0]
-                    loss = criterion(output, torch.autograd.Variable(torch.Tensor([0.01])))
-                    # zero the parameter gradients
-                    optimizer.zero_grad()
-                    # backward + optimize
-                    loss.backward()
-                    optimizer.step()
-                    # print statistics
-                    running_loss += loss.data[0]
-
                 if (i + 1) % 2000 == 0:
-                    print xx, yy
                     print('%20s [%d, %5d]  training loss: %.3f' % (model_type, epoch+1, i+1, running_loss/2000))
                     fout.write('%20s [%d, %5d]  training loss: %.3f\n' % (model_type, epoch+1, i+1, running_loss/20))
                     running_loss = 0.0
@@ -112,6 +140,7 @@ def write_performance(pd, model_type, metrics, train_time):
         fout.write(content_string + '\n')
 
 
+
 def read_first_line(perf_file):
     if not os.path.exists(perf_file):
         return None
@@ -126,16 +155,15 @@ def main(pd):
         torch.manual_seed(1)
         train_data, test_data, x_vocab, y_vocab = load_data(model_type, pd)
         model = build_model(x_vocab.size(), y_vocab.size(), model_type, pd)
-        criterion = nn.BCELoss()
+        # criterion = nn.BCELoss()
         # criterion = nn.NLLLoss()
+        criterion = NSNLLLoss()
         optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-        # # train
+        # train
         start = time.time()
-        train(train_data, model, criterion, optimizer, model_type, pd)
+        train_neg(train_data, model, criterion, optimizer, model_type, pd)
         end = time.time()
         train_time = end - start
-        print train_time
-        print RelationDataset.sampling_time
         # # evaluate
         metrics = evaluate_neg(test_data, model, y_vocab.size())
         write_performance(pd, model_type, metrics, train_time)

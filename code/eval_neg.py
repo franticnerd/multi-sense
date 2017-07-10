@@ -27,13 +27,16 @@ def evaluate_neg(test_data, model, y_vocab_size):
 
 
 def get_output(model, features, y_vocab_size):
-    ret = []
-    for i in xrange(y_vocab_size):
-        test_label = Variable(torch.LongTensor([i]))
-        score = model(Variable(torch.LongTensor(features)), test_label)
-        ret.append(score.data[0])
-    return Variable(torch.Tensor(ret)).view(1, -1)
+    features = Variable(torch.LongTensor(features))
+    y_labels = Variable(torch.LongTensor([i for i in xrange(y_vocab_size)]))
+    return model(features, y_labels)
 
+    # ret = []
+    # for i in xrange(y_vocab_size):
+    #     test_label = Variable(torch.LongTensor([i]))
+    #     score = model(Variable(torch.LongTensor(features)), test_label)
+    #     ret.append(score.data[0])
+    # return Variable(torch.Tensor(ret)).view(1, -1)
 
 
 # check whether the ground truth appears in the top-K list, for computing the hit ratio

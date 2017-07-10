@@ -3,18 +3,15 @@ from torch.utils.data import Dataset, DataLoader
 from collections import Counter
 import numpy as np
 import numpy.random as nprd
-import time
+import math
 
 
 class RelationDataset(Dataset):
-
-    sampling_time = 0.0
 
     def __init__(self, data_file, multi_sense=False, n_sense = 1):
         self.instances = pd.read_table(data_file, header=None)
         self.multi_sense = multi_sense
         self.n_sense = n_sense
-        # self.get_negative_samples()
 
     def __len__(self):
         return len(self.instances)
@@ -33,21 +30,18 @@ class RelationDataset(Dataset):
         counter = Counter(y_labels)
         for idx in counter:
             count = counter[idx]
-            weights[idx] = count
+            weights[idx] = math.pow(count, 0.75)
         self.weights = weights / sum(weights)
 
 
     # get negative samples for y
     def sample_negatives(self, n_sample, tgt_idx):
-        start = time.time()
         n_label = len(self.weights)
         ret = []
         while len(ret) < n_sample:
             rand_idx = nprd.choice(n_label, p=self.weights)
             if rand_idx != tgt_idx:
                 ret.append(rand_idx)
-        end = time.time()
-        RelationDataset.sampling_time += (end - start)
         return ret
 
 
