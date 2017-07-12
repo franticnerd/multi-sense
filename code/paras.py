@@ -46,6 +46,7 @@ def set_default_params():
     pd['case_output_file'] = pd['data_dir'] + 'output/case_outputs.txt'
     pd['model_path'] = pd['data_dir'] + 'model/'
     pd['n_sense'] = 2
+    pd['load_model'] = True
     pd['K'] = 2
     # model and training opts
     # pd['model_type_list'] = ['comp_attn_sense_net']

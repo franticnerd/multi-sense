@@ -1,5 +1,6 @@
 import torch
 
+from train import Trainer
 from utils import format_list_to_string, ensure_directory_exist
 from models.model import Recon, AttnNet, SenseNet, AttnSenseNet, CompAttnSenseNet, BilinearSenseNet, BidirectionSenseNet
 
@@ -7,6 +8,19 @@ from models.model import Recon, AttnNet, SenseNet, AttnSenseNet, CompAttnSenseNe
 class ModelManager:
     def __init__(self, opt):
         self.opt = opt
+
+    def build_model(self, model_type, dataset):
+        x_vocab_size = dataset.x_vocab.size()
+        y_vocab_size = dataset.y_vocab.size()
+        model = self.init_model(model_type, x_vocab_size, y_vocab_size)
+        if self.opt['load_model']:
+            self.load_model(model, model_type)
+            train_time = 0.0
+        else:
+            trainer = Trainer(model, self.opt, model_type)
+            train_time = trainer.train(dataset.train_data, dataset.valid_data, self)
+            self.load_model(model, model_type)  # load the best model
+        return model, train_time
 
     def load_model(self, model, model_type):
         model_name = self.get_model_name(model_type)
@@ -25,7 +39,7 @@ class ModelManager:
         model_name = format_list_to_string(attributes, '_')
         return model_name + '.model'
 
-    def build_model(self, model_type, x_vocab_size, y_vocab_size):
+    def init_model(self, model_type, x_vocab_size, y_vocab_size):
         embedding_dim = self.opt['embedding_dim']
         n_sense = self.opt['n_sense']
         if model_type == 'recon':

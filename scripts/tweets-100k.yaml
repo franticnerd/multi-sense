@@ -21,6 +21,8 @@ model_path: !join [*DIR, model/]
 train_log_file: !join [*DIR, output/train_log.txt]
 performance_file:  !join [*DIR, output/performance.txt]
 
+load_model: True
+
 n_sense: 2
 embedding_dim: 5
 n_epoch: 200

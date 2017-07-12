@@ -80,15 +80,15 @@ class SenseNet(nn.Module):
     def get_embedding(self, idx):
         return self.embedding.weight[idx]
     def calc_similarities(self, query_embedding):
-        # return torch.mm(query_embedding.view(1,-1), self.embedding.weight.transpose(0, 1))
-        ret = []
-        for i in xrange(self.embedding.weight.size()[0]):
-            embedding = self.embedding.weight[i]
-            norm_prod = embedding.norm() * query_embedding.norm()
-            denominator = np.max([1e-8, norm_prod.data[0]])
-            similarity = np.dot(query_embedding.data.tolist(), embedding.data.tolist()) / denominator
-            ret.append(similarity)
-        return Variable(torch.Tensor(ret)).view(1, -1)
+        return torch.mm(query_embedding.view(1,-1), self.embedding.weight.transpose(0, 1))
+        # ret = []
+        # for i in xrange(self.embedding.weight.size()[0]):
+        #     embedding = self.embedding.weight[i]
+        #     norm_prod = embedding.norm() * query_embedding.norm()
+        #     denominator = np.max([1e-8, norm_prod.data[0]])
+        #     similarity = np.dot(query_embedding.data.tolist(), embedding.data.tolist()) / denominator
+        #     ret.append(similarity)
+        # return Variable(torch.Tensor(ret)).view(1, -1)
 
 
 class BilinearSenseNet(nn.Module):
