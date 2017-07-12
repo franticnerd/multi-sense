@@ -9,8 +9,14 @@ min_token_freq: 20
 # training
 train_data_file: !join [*DIR, input/train.txt]
 test_data_file: !join [*DIR, input/test.txt]
+valid_data_file: !join [*DIR, input/test.txt]
 x_vocab_file: !join [*DIR, input/words.txt]
 y_vocab_file: !join [*DIR, input/locations.txt]
+
+case_seed_file: !join [*DIR, input/case_seeds.txt]
+case_output_file: !join [*DIR, output/case_outputs.txt]
+
+model_path: !join [*DIR, model/]
 train_log_file: !join [*DIR, output/train_log.txt]
 performance_file:  !join [*DIR, output/performance.txt]
 
@@ -19,5 +25,5 @@ embedding_dim: 5
 n_epoch: 200
 
 # model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
-model_type_list: ['sense_net', 'attn_sense_net', 'comp_attn_sense_net']
+model_type_list: ['sense_net']
 # model_type_list: ['cbow']

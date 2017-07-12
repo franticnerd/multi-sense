@@ -1,5 +1,7 @@
 import numpy as np
 import os
+import random
+import torch
 
 # convert a list into a string
 def format_list_to_string(l, sep='\n'):
@@ -23,3 +25,16 @@ def ensure_directory_exist(file_name):
     directory = os.path.dirname(file_name)
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+
+def read_first_line(perf_file):
+    if not os.path.exists(perf_file):
+        return None
+    with open(perf_file, 'r') as fin:
+        first_line = fin.readline().strip()
+        return first_line
+
+
+def set_random_seeds():
+    torch.manual_seed(1)
+    random.seed(1)

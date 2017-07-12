@@ -11,10 +11,11 @@ def load_tweets(clean_tweet_file):
     return td
 
 
-def split_data(td, train_ratio):
+def split_data(td, train_ratio, valid_ratio):
     td.shuffle_tweets()
-    train_db, test_db = td.split(train_ratio)
-    return train_db, test_db
+    train_db, valid_test_db = td.split(train_ratio)
+    valid_db, test_db = valid_test_db.split(valid_ratio / (1.0 - train_ratio))
+    return train_db, valid_db, test_db
 
 
 def write_data(td, word_dict, spatial_grid, output_file):
@@ -38,9 +39,10 @@ def run(pd):
     spatial_grid = td.gen_spatial_grid(pd['grid_list'], min_freq=pd['min_token_freq'])
     spatial_grid.write_to_file(pd['y_vocab_file'])
     # split data
-    train_db, test_db = split_data(td, pd['train_ratio'])
+    train_db, valid_db, test_db = split_data(td, pd['train_ratio'], pd['valid_ratio'])
     # write train and test data into file
     write_data(train_db, word_dict, spatial_grid, pd['train_data_file'])
+    write_data(valid_db, word_dict, spatial_grid, pd['valid_data_file'])
     write_data(test_db, word_dict, spatial_grid, pd['test_data_file'])
 
 

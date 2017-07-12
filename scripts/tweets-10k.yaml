@@ -1,23 +1,35 @@
 data_dir: &DIR ../data/tweets-10k/
 
 # preprocessing
-raw_data_file: /shared/data/czhang82/source/sample-tweets-10k/clean/tweets.txt
+raw_data_file: /Users/chao/data/source/tweets-10k/clean/tweets.txt
 grid_list: [50, 50]
-train_ratio: 0.9
-min_token_freq: 20
+train_ratio: 0.7
+valid_ratio: 0.1
+min_token_freq: 10
 
 # training
 train_data_file: !join [*DIR, input/train.txt]
 test_data_file: !join [*DIR, input/test.txt]
+valid_data_file: !join [*DIR, input/test.txt]
 x_vocab_file: !join [*DIR, input/words.txt]
 y_vocab_file: !join [*DIR, input/locations.txt]
 
+case_seed_file: !join [*DIR, input/case_seeds.txt]
+case_output_file: !join [*DIR, output/case_outputs.txt]
+
+model_path: !join [*DIR, model/]
 train_log_file: !join [*DIR, output/train_log.txt]
 performance_file:  !join [*DIR, output/performance.txt]
 
 n_sense: 2
 embedding_dim: 5
-n_epoch: 200
+n_epoch: 100
+# n_epoch: 100
 
-# model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
-model_type_list: ['cbow']
+K: 10
+print_gap: 2000
+# model_type_list: ['recon', 'attn', 'sense', 'bilinear_sense', 'bidirection_sense', 'attn_sense', 'comp_attn_sense']
+model_type_list: ['sense']
+# model_type_list: ['sense_net', 'attn_sense_net']
+# model_type_list: ['sense_net']
+
