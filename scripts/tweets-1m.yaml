@@ -4,13 +4,33 @@ data_dir: &DIR ../data/tweets-1m/
 # raw_data_file: /shared/data/kzhang53/embedding/la/input/tweets.txt
 raw_data_file: /shared/data/czhang82/source/sample-tweets-1m/clean/tweets.txt
 grid_list: [100, 100]
-train_ratio: 0.9
+train_ratio: 0.8
+valid_ratio: 0.1
 min_token_freq: 50
+
 
 # training
 train_data_file: !join [*DIR, input/train.txt]
 test_data_file: !join [*DIR, input/test.txt]
+valid_data_file: !join [*DIR, input/test.txt]
 x_vocab_file: !join [*DIR, input/words.txt]
 y_vocab_file: !join [*DIR, input/locations.txt]
-embedding_dim: 300
+
+case_seed_file: !join [*DIR, input/case_seeds.txt]
+case_output_file: !join [*DIR, output/case_outputs.txt]
+
+model_path: !join [*DIR, model/]
+train_log_file: !join [*DIR, output/train_log.txt]
+performance_file:  !join [*DIR, output/performance.txt]
+
+load_model: False
+
+n_sense: 2
+embedding_dim: 200
 n_epoch: 10
+
+K: 10
+print_gap: 20000
+# model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
+# model_type_list: ['sense']
+model_type_list: ['recon']
