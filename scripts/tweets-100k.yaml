@@ -21,7 +21,7 @@ model_path: !join [*DIR, model/]
 train_log_file: !join [*DIR, output/train_log.txt]
 performance_file:  !join [*DIR, output/performance.txt]
 
-load_model: True
+load_model: False
 
 n_sense: 2
 embedding_dim: 5
@@ -30,5 +30,5 @@ n_epoch: 200
 K: 10
 print_gap: 2000
 # model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
-model_type_list: ['sense']
-# model_type_list: ['cbow']
+# model_type_list: ['sense']
+model_type_list: ['recon']
