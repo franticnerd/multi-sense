@@ -4,6 +4,7 @@ data_dir: &DIR ../data/tweets-100k/
 raw_data_file: /shared/data/czhang82/source/sample-tweets-100k/clean/tweets.txt
 grid_list: [50, 50]
 train_ratio: 0.9
+# valid_ratio: 0.1
 min_token_freq: 20
 
 # training
@@ -24,6 +25,8 @@ n_sense: 2
 embedding_dim: 5
 n_epoch: 200
 
+K: 10
+print_gap: 2000
 # model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
 model_type_list: ['sense']
 # model_type_list: ['cbow']
