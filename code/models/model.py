@@ -8,7 +8,6 @@ from torch.autograd import Variable
 class Recon(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
         super(Recon, self).__init__()
-        # self.embedding = nn.EmbeddingBag(vocab_size, embedding_dim)
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
     def forward(self, inputs):
@@ -19,15 +18,15 @@ class Recon(nn.Module):
         return log_probs
 
 
+
+
 class ReconNS(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
         super(ReconNS, self).__init__()
-        # self.embedding = nn.EmbeddingBag(vocab_size, embedding_dim)
         self.embeder_x = nn.Embedding(vocab_size, embedding_dim)
         self.embeder_y = nn.Embedding(output_vocab_size, embedding_dim)
     def forward(self, inputs, labels):
         x_embeds = self.embeder_x(inputs)
-        # print self.embeder_x.weight[6]
         x_mean = torch.mean(x_embeds, dim=0)
         y_embeds = self.embeder_y(labels).transpose(0, 1)
         similarities = torch.mm(x_mean, y_embeds)

@@ -23,4 +23,4 @@ def main(opt):
 if __name__ == '__main__':
     para_file = None if len(sys.argv) <= 1 else sys.argv[1]
     opt = load_params(para_file)  # load parameters as a dict
-    main(opt)
+    # main(opt)
