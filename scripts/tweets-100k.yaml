@@ -24,8 +24,8 @@ performance_file:  !join [*DIR, output/performance.txt]
 load_model: False
 
 n_sense: 2
-embedding_dim: 5
-n_epoch: 200
+embedding_dim: 300
+n_epoch: 10
 
 K: 10
 print_gap: 2000
