@@ -54,7 +54,7 @@ def set_default_params():
     # model and training opts
     # pd['model_type_list'] = ['comp_attn_sense_net']
     # pd['model_type_list'] = ['cbow', 'comp_attn_sense_net']
-    pd['model_type_list'] = ['bidirection_sense']
+    pd['model_type_list'] = ['sense']
     # pd['model_type_list'] = ['attn']
     pd['embedding_dim'] = 2
     pd['n_epoch'] = 10

@@ -40,7 +40,7 @@ class Trainer:
         running_loss = 0.0
         for i, data_batch in enumerate(train_data):
             # get the input
-            inputs = Variable(data_batch[0]).view(self.batch_size, -1)
+            inputs = Variable(data_batch[0])
             length_weights = Variable(1.0/data_batch[1].float()).view(-1, 1, 1)
             word_masks = data_batch[2]
             labels = Variable(data_batch[3]).view(-1)
