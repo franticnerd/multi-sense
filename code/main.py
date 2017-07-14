@@ -14,13 +14,13 @@ def main(opt):
         model_manager = ModelManager(opt)
         model, train_time = model_manager.build_model(model_type, dataset)
         evaluator = Evaluator(opt)
-        metrics = evaluator.eval(model, dataset.test_data)
+        metrics = evaluator.eval(model, dataset.test_loader)
         evaluator.write_performance(model_type, metrics, train_time)
-        case_evaluator = CaseEvaluator(model, dataset, opt)
-        case_evaluator.run_case_study()
+        # case_evaluator = CaseEvaluator(model, dataset, opt)
+        # case_evaluator.run_case_study()
 
 
 if __name__ == '__main__':
     para_file = None if len(sys.argv) <= 1 else sys.argv[1]
     opt = load_params(para_file)  # load parameters as a dict
-    # main(opt)
+    main(opt)

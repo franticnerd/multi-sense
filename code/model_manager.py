@@ -14,12 +14,15 @@ class ModelManager:
         y_vocab_size = dataset.y_vocab.size()
         model = self.init_model(model_type, x_vocab_size, y_vocab_size)
         if self.opt['load_model']:
-            self.load_model(model, model_type)
-            train_time = 0.0
-        else:
-            trainer = Trainer(model, self.opt, model_type)
-            train_time = trainer.train(dataset.train_data, dataset.valid_data, self)
-            self.load_model(model, model_type)  # load the best model
+            try:
+                self.load_model(model, model_type)
+                train_time = 0.0
+                return model, train_time
+            except:
+                print 'Model file not exist. Start training model from scratch.'
+        trainer = Trainer(model, self.opt, model_type)
+        train_time = trainer.train(dataset.train_loader, dataset.valid_loader, self)
+        self.load_model(model, model_type)  # load the best model
         return model, train_time
 
     def load_model(self, model, model_type):
@@ -35,7 +38,8 @@ class ModelManager:
 
     def get_model_name(self, model_type):
         embedding_dim = self.opt['embedding_dim']
-        attributes = [model_type, embedding_dim]
+        batch_size = self.opt['batch_size']
+        attributes = [model_type, 'd', embedding_dim, 'batch', batch_size]
         model_name = format_list_to_string(attributes, '_')
         return model_name + '.model'
 

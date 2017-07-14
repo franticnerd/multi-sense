@@ -46,14 +46,16 @@ def set_default_params():
     pd['case_output_file'] = pd['data_dir'] + 'output/case_outputs.txt'
     pd['model_path'] = pd['data_dir'] + 'model/'
     pd['n_sense'] = 2
-    pd['load_model'] = True
+    pd['load_model'] = False
+    pd['save_model'] = True
     pd['K'] = 2
+    pd['data_worker'] = 1
+    pd['batch_size'] = 2
     # model and training opts
     # pd['model_type_list'] = ['comp_attn_sense_net']
     # pd['model_type_list'] = ['cbow', 'comp_attn_sense_net']
-    pd['model_type_list'] = ['sense']
-    # pd['model_type_list'] = ['bi_sense_net']
-    # pd['model_type'] = 'attn_net'
+    pd['model_type_list'] = ['bidirection_sense']
+    # pd['model_type_list'] = ['attn']
     pd['embedding_dim'] = 2
     pd['n_epoch'] = 10
     pd['print_gap'] = 20

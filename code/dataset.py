@@ -1,30 +1,52 @@
 import math
 from collections import Counter
 
+import torch
 import numpy as np
 import numpy.random as nprd
 import pandas as pd
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 
 class RelationDataset(Dataset):
 
-    def __init__(self, data_file, multi_sense=False, n_sense = 1):
+    def __init__(self, data_file, n_sense=1, feature_id_offset=0):
         self.instances = pd.read_table(data_file, header=None)
-        self.multi_sense = multi_sense
         self.n_sense = n_sense
+        # the offset of the idx of the features, by default preserve 0 as the dumb embedding
+        self.feature_id_offset = feature_id_offset
+        # the maximum number of non-zero features in an instance
+        self.max_feature_len = self.get_max_feature_len()
+
+    def get_max_feature_len(self):
+        max_len = 0
+        for idx in xrange(len(self.instances)):
+            features = self.instances.ix[idx, 1].strip().split()
+            if len(features) > max_len:
+                max_len = len(features)
+        return max_len
 
     def __len__(self):
         return len(self.instances)
 
     def __getitem__(self, idx):
-        label = [self.instances.ix[idx, 0]]
-        input = map(int, str(self.instances.ix[idx, 1]).strip().split())
-        if self.multi_sense:
-            input = [e * self.n_sense + i for e in input for i in xrange(self.n_sense)]
-        return input, label
+        label = self.instances.ix[idx, 0]
+        feature_input = map(int, str(self.instances.ix[idx, 1]).strip().split())
+        feature_length = len(feature_input)
+        # every instance has faeture length as self.max_len * self.n_sense, padded with zeros by default
+        features = np.zeros(self.max_feature_len * self.n_sense, dtype=np.int)
+        word_mask = np.ones(self.max_feature_len, dtype=np.int)
+        for i in xrange(feature_length):
+            for j in xrange(self.n_sense):
+                pos = i * self.n_sense + j
+                # need to plus the offset (1) because 0 is preserved as padding idx
+                value = self.feature_id_offset + feature_input[i] * self.n_sense + j
+                features[pos] = value
+            word_mask[i] = 0
+        return torch.from_numpy(features), torch.LongTensor([feature_length]), torch.from_numpy(word_mask).byte(), torch.LongTensor([label])
 
-    # get the weights for sampling from multinomial distributions
+    # TODO: need to modify the following functions to account for offset
+    # get the weights for sampling from multinomial distributions, used for negative sampling models
     def gen_multinomial_dist(self, n_label):
         weights = np.zeros(n_label)
         y_labels = self.instances.ix[:, 0].tolist()
@@ -34,8 +56,7 @@ class RelationDataset(Dataset):
             weights[idx] = math.pow(count, 0.75)
         self.weights = weights / sum(weights)
 
-
-    # get negative samples for y
+    # get negative samples for y, used for negative sampling models
     def sample_negatives(self, n_sample, tgt_idx):
         n_label = len(self.weights)
         ret = []
@@ -46,80 +67,59 @@ class RelationDataset(Dataset):
         return ret
 
 
-class Vocab():
-
-    def __init__(self, data_file, multi_sense=False, n_sense=1):
-        self.id_to_description = {}
-        self.description_to_id = {}
+class Vocab:
+    def __init__(self, data_file, n_sense=1, id_offset=0):
+        self.rawid_to_description = {}
+        self.description_to_rawid = {}
         with open(data_file, 'r') as fin:
             for line in fin:
                 items = line.strip().split('\t')
-                idx = int(items[0])
+                raw_id = int(items[0])
                 description = items[1]
-                self.id_to_description[idx] = description
-                self.description_to_id[description] = idx
-        self.multi_sense = multi_sense
+                self.rawid_to_description[raw_id] = description
+                self.description_to_rawid[description] = raw_id
         self.n_sense = n_sense
+        self.id_offset = id_offset
 
-
+    # the size of the vocabulory, namely the number of converted feature ids (including 0)
     def size(self):
-        if self.multi_sense:
-            return len(self.id_to_description) * self.n_sense
-        else:
-            return len(self.id_to_description)
+        return len(self.rawid_to_description) * self.n_sense + self.id_offset
 
+    # get the description for a converted id
+    def get_description(self, idx):
+        raw_id = (idx - self.id_offset) / self.n_sense
+        return self.rawid_to_description[raw_id]
 
-    def get_description(self, id):
-        if self.multi_sense:
-            return self.id_to_description[id / self.n_sense]
-        else:
-            return self.id_to_description[id]
-
-    def get_id(self, description):
-        idx = self.description_to_id[description]
-        if self.multi_sense:
-            return [idx * self.n_sense + i for i in xrange(self.n_sense)]
-        else:
-            return [idx]
+    # get the feature id list for a description
+    def get_feature_ids(self, description):
+        raw_id = self.description_to_rawid[description]
+        return [raw_id * self.n_sense + i + self.id_offset for i in xrange(self.n_sense)]
 
 
 class DataSet:
-
     def __init__(self, opt, model_type):
-        self.opt = opt
-        self.model_type = model_type
-        # set the sense parameters based on model type
-        if model_type in ['recon', 'attn']:
-            self.multi_sense = False
-            self.n_sense = 1
-        else:
-            self.multi_sense = True
-            self.n_sense = self.opt['n_sense']
-        self.x_vocab_file = opt['x_vocab_file']
-        self.y_vocab_file = opt['y_vocab_file']
-        self.train_file = opt['train_data_file']
-        self.test_file = opt['test_data_file']
-        self.valid_file = opt['valid_data_file']
-        self.load_data()
+        n_sense = 1 if model_type in ['recon', 'attn'] else opt['n_sense']
+        x_vocab_file = opt['x_vocab_file']
+        y_vocab_file = opt['y_vocab_file']
+        train_file = opt['train_data_file']
+        valid_file = opt['valid_data_file']
+        test_file = opt['test_data_file']
+        batch_size = opt['batch_size']
+        n_worker = opt['data_worker']
+        # load the data
+        self.x_vocab = Vocab(x_vocab_file, n_sense, id_offset=1)
+        self.y_vocab = Vocab(y_vocab_file, 1)
+        # self.y_vocab = Vocab(y_vocab_file, n_sense)
+        train_data = RelationDataset(train_file, n_sense, feature_id_offset=1)
+        valid_data = RelationDataset(valid_file, n_sense, feature_id_offset=1)
+        test_data = RelationDataset(test_file, n_sense, feature_id_offset=1)
+        self.train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
+        self.valid_loader = DataLoader(valid_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
+        self.test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
 
-    def load_data(self):
-        self.x_vocab = Vocab(self.x_vocab_file, self.multi_sense, self.n_sense)
-        # self.y_vocab = Vocab(y_vocab_file, self.multi_sense, self.n_sense)
-        self.y_vocab = Vocab(self.y_vocab_file, False, 1)
-        self.train_data = RelationDataset(self.train_file, self.multi_sense, self.n_sense)
-        self.test_data = RelationDataset(self.test_file, self.multi_sense, self.n_sense)
-        self.valid_data = RelationDataset(self.valid_file, self.multi_sense, self.n_sense)
+        # # for debug mode
+        # for batched in self.train_loader:
+        #     print batched[0]
+        #     print batched[1]
+        #     print batched[2]
 
-
-    # # def get_x_vocab_size(self):
-    # #     return self.x_vocab.size()
-    #
-    # def get_y_vocab_size(self):
-    #     return self.y_vocab.size()
-
-        # # y_vocab = Vocab(pd['y_vocab_file'], multi_sense, n_sense)
-        # y_vocab = Vocab(pd['y_vocab_file'], False, 1)
-        # train_data = RelationDataset(pd['train_data_file'], multi_sense, n_sense)
-        # test_data = RelationDataset(pd['test_data_file'], multi_sense, n_sense)
-        # validation_data = RelationDataset(pd['valid_data_file'], multi_sense, n_sense)
-        # return x_vocab, y_vocab, train_data, test_data, validation_data

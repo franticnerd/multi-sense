@@ -3,22 +3,34 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+import constants
+
+
+# class Recon(nn.Module):
+#     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
+#         super(Recon, self).__init__()
+#         self.embedding = nn.Embedding(vocab_size, embedding_dim)
+#         self.linear = nn.Linear(embedding_dim, output_vocab_size)
+#     def forward(self, inputs):
+#         embeds = self.embedding(inputs)
+#         out = torch.mean(embeds, dim=0)
+#         out = self.linear(out)
+#         log_probs = F.log_softmax(out)
+#         return log_probs
 
 
 class Recon(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
         super(Recon, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=constants.PAD)
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
-    def forward(self, inputs):
+    def forward(self, inputs, length_weights, word_attn_mask):
         embeds = self.embedding(inputs)
-        out = torch.mean(embeds, dim=0)
+        out = torch.sum(embeds, dim=1)
+        out = torch.bmm(length_weights, out).squeeze(1)
         out = self.linear(out)
         log_probs = F.log_softmax(out)
         return log_probs
-
-
-
 
 class ReconNS(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
@@ -37,45 +49,65 @@ class ReconNS(nn.Module):
 class AttnNet(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
         super(AttnNet, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=constants.PAD)
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
-        # self.attn = nn.Parameter(torch.randn(embedding_dim, 1))
         self.attn = nn.Linear(embedding_dim, 1)
         self.attn_softmax = nn.Softmax()
-    def forward(self, inputs):
-        embeds = self.embedding(inputs)  # n_words * dim
-        # self.print_attn_parameters()
-        # attn_weights = torch.mm(embeds, self.attn)
-        attn_weights = self.attn(embeds)  # 1 * n_words
-        attn_weights = self.attn_softmax(attn_weights.transpose(0, 1))
-        out = torch.mm(attn_weights, embeds)
-        # out = torch.mean(embeds, dim=0)
+    def forward(self, inputs, length_weights, word_attn_mask):
+        embeds = self.embedding(inputs)
+        mb_size, max_len, embedding_dim = embeds.size()
+        embeds = embeds.view(-1, embedding_dim)
+        attn_weights = self.attn(embeds).view(mb_size, max_len)
+        attn_mask = self.get_attn_mask(inputs)
+        attn_weights.data.masked_fill_(attn_mask, -float('inf'))
+        attn_weights = self.attn_softmax(attn_weights).unsqueeze(1)
+        embeds = embeds.view(mb_size, max_len, embedding_dim)
+        out = torch.bmm(attn_weights, embeds).squeeze(1)
         out = self.linear(out)
         log_probs = F.log_softmax(out)
         return log_probs
-    def print_attn_parameters(self):
-        for p in self.attn.parameters():
-            print p
-
+    # get the masks for computing mini-batch attention
+    def get_attn_mask(self, inputs):
+        pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
+        return pad_attn_mask
 
 class SenseNet(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size, n_sense):
         super(SenseNet, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=constants.PAD)
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
         self.n_sense = n_sense
-    def forward(self, inputs):
-        n_words = inputs.size()[0] / self.n_sense
-        embeds = self.embedding(inputs)
-        context_vec = torch.mean(embeds, dim=0).transpose(0, 1)
-        similarity_vec = torch.mm(embeds, context_vec)
-        attn_weights = similarity_vec.view(-1, self.n_sense)
-        attn_weights = F.softmax(attn_weights).view(1, -1) / n_words
-        out = torch.mm(attn_weights, embeds)
-        # out = torch.mean(embeds, dim=0)
+        self.embedding_dim = embedding_dim
+    def forward(self, inputs, length_weights, word_attn_mask):
+        mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
+        embeds = self.embedding(inputs) # mb_size * (max_len * embedding_dim)
+        # compute the context vector
+        embeds = embeds.view(mb_size, max_len, self.n_sense, self.embedding_dim)
+        embed_mean = torch.mean(embeds, dim=2).squeeze(2)  # mb_size * max_len * embedding_dim
+        embed_mean = torch.sum(embed_mean, dim=1)  # mb_size * 1 * embedding_dim
+        context_vec = torch.bmm(length_weights, embed_mean)  # mb_size * 1 * embedding_dim
+        # compute the similarities
+        embeds = embeds.view(mb_size, -1, self.embedding_dim)  # mb_size * (max_len * n_sense) * embedding_dim
+        context_vec = context_vec.transpose(1, 2)  # mb_size * embedding_dim * 1
+        similarity_vec = torch.bmm(embeds, context_vec)  # mb_size * (max_len * n_sense) * 1
+        # get the attention weights over the senses
+        attn_weights = similarity_vec.view(-1, self.n_sense)  # (mb_size * max_len) * n_sense
+        attn_weights = F.softmax(attn_weights).view(mb_size, 1,  -1)  # mb_size * 1 * (max_len * n_sense)
+        attn_weights = torch.bmm(length_weights, attn_weights).squeeze(1)  # scale by length, mb_size * (max_len * n_sense)
+        attn_mask = self.get_attn_mask(inputs)
+        attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
+        attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
+        # now use the attention to get the hidden state
+        out = torch.bmm(attn_weights, embeds).squeeze(1)
         out = self.linear(out)
         log_probs = F.log_softmax(out)
         return log_probs
+
+    # get the masks for computing mini-batch attention
+    def get_attn_mask(self, inputs):
+        pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
+        return pad_attn_mask
+
     def get_embedding(self, idx):
         return self.embedding.weight[idx]
     def calc_similarities(self, query_embedding):
@@ -93,23 +125,40 @@ class SenseNet(nn.Module):
 class BilinearSenseNet(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size, n_sense):
         super(BilinearSenseNet, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=constants.PAD)
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
         self.attention_linear = nn.Linear(embedding_dim, embedding_dim)
         self.n_sense = n_sense
-    def forward(self, inputs):
-        n_words = inputs.size()[0] / self.n_sense
-        embeds = self.embedding(inputs)
-        context_vec = torch.mean(embeds, dim=0)
-        context_vec = self.attention_linear(context_vec).transpose(0, 1)
-        similarity_vec = torch.mm(embeds, context_vec)
-        attn_weights = similarity_vec.view(-1, self.n_sense)
-        attn_weights = F.softmax(attn_weights).view(1, -1) / n_words
-        out = torch.mm(attn_weights, embeds)
-        # out = torch.mean(embeds, dim=0)
+        self.embedding_dim = embedding_dim
+    def forward(self, inputs, length_weights, word_attn_mask):
+        mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
+        embeds = self.embedding(inputs) # mb_size * (max_len * embedding_dim)
+        # compute the context vector
+        embeds = embeds.view(mb_size, max_len, self.n_sense, self.embedding_dim)
+        embed_mean = torch.mean(embeds, dim=2).squeeze(2)  # mb_size * max_len * embedding_dim
+        embed_mean = torch.sum(embed_mean, dim=1)  # mb_size * 1 * embedding_dim
+        context_vec = torch.bmm(length_weights, embed_mean).squeeze(1)  # mb_size * embedding_dim
+        context_vec = self.attention_linear(context_vec).unsqueeze(1)  # mb_size * 1 * embedding_dim
+        # compute the similarities
+        embeds = embeds.view(mb_size, -1, self.embedding_dim)  # mb_size * (max_len * n_sense) * embedding_dim
+        context_vec = context_vec.transpose(1, 2)  # mb_size * embedding_dim * 1
+        similarity_vec = torch.bmm(embeds, context_vec)  # mb_size * (max_len * n_sense) * 1
+        # get the attention weights over the senses
+        attn_weights = similarity_vec.view(-1, self.n_sense)  # (mb_size * max_len) * n_sense
+        attn_weights = F.softmax(attn_weights).view(mb_size, 1,  -1)  # mb_size * 1 * (max_len * n_sense)
+        attn_weights = torch.bmm(length_weights, attn_weights).squeeze(1)  # scale by length, mb_size * (max_len * n_sense)
+        attn_mask = self.get_attn_mask(inputs)
+        attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
+        attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
+        # now use the attention to get the hidden state
+        out = torch.bmm(attn_weights, embeds).squeeze(1)
         out = self.linear(out)
         log_probs = F.log_softmax(out)
         return log_probs
+    # get the masks for computing mini-batch attention
+    def get_attn_mask(self, inputs):
+        pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
+        return pad_attn_mask
 
 
 class BidirectionSenseNet(nn.Module):
@@ -117,95 +166,144 @@ class BidirectionSenseNet(nn.Module):
         super(BidirectionSenseNet, self).__init__()
         self.x_vocab_size = x_vocab_size
         self.y_vocab_size = y_vocab_size * n_sense
-        self.x_embedder = nn.Embedding(x_vocab_size, embedding_dim)
+        self.x_embedder = nn.Embedding(x_vocab_size, embedding_dim, padding_idx=constants.PAD)
         self.y_embedder = nn.Embedding(self.y_vocab_size, embedding_dim)
         self.n_sense = n_sense
         self.embedding_dim = embedding_dim
-    def forward(self, x_input):
-        # number of words
-        n_words = x_input.size()[0] / self.n_sense
-        x_embeds = self.x_embedder(x_input)
-        context_vec = torch.mean(x_embeds, dim=0).transpose(0, 1)
-        similarity_vec = torch.mm(x_embeds, context_vec)
-        attn_weights = similarity_vec.view(-1, self.n_sense)
-        attn_weights = F.softmax(attn_weights).view(1, -1) / n_words
-        # use attention to get hidden state
-        hidden = torch.mm(attn_weights, x_embeds).transpose(0, 1)
+    def forward(self, inputs, length_weights, word_attn_mask):
+        mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
+        embeds = self.x_embedder(inputs) # mb_size * (max_len * embedding_dim)
+        # compute the context vector
+        embeds = embeds.view(mb_size, max_len, self.n_sense, self.embedding_dim)
+        embed_mean = torch.mean(embeds, dim=2).squeeze(2)  # mb_size * max_len * embedding_dim
+        embed_mean = torch.sum(embed_mean, dim=1)  # mb_size * 1 * embedding_dim
+        context_vec = torch.bmm(length_weights, embed_mean)  # mb_size * 1 * embedding_dim
+        # compute the similarities
+        embeds = embeds.view(mb_size, -1, self.embedding_dim)  # mb_size * (max_len * n_sense) * embedding_dim
+        context_vec = context_vec.transpose(1, 2)  # mb_size * embedding_dim * 1
+        similarity_vec = torch.bmm(embeds, context_vec)  # mb_size * (max_len * n_sense) * 1
+        # get the attention weights over the senses
+        attn_weights = similarity_vec.view(-1, self.n_sense)  # (mb_size * max_len) * n_sense
+        attn_weights = F.softmax(attn_weights).view(mb_size, 1,  -1)  # mb_size * 1 * (max_len * n_sense)
+        attn_weights = torch.bmm(length_weights, attn_weights).squeeze(1)  # scale by length, mb_size * (max_len * n_sense)
+        attn_mask = self.get_attn_mask(inputs)
+        attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
+        attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
+        # now use the attention to get the hidden state
+        hidden = torch.bmm(attn_weights, embeds)  # mb_size * 1 * dim
         # predict over y
         y_labels = torch.linspace(0, self.y_vocab_size - 1, self.y_vocab_size).long()
-        y_labels = Variable(y_labels)
-        y_embeds = self.y_embedder(y_labels)
-        similarity_vec = torch.mm(y_embeds, context_vec)
+        y_labels = Variable(y_labels.view(1, self.y_vocab_size).expand(mb_size, self.y_vocab_size))
+        y_embeds = self.y_embedder(y_labels)  # mb_size * y_vocab_size * dim
+        similarity_vec = torch.bmm(y_embeds, context_vec)  # mb_size * y_vocab_size (namely vocab * n_sense)
+        # compute the attention vectors over y senses
         attn_weights = similarity_vec.view(-1, self.n_sense)
-        attn_weights = F.softmax(attn_weights).view(1, -1)
+        attn_weights = F.softmax(attn_weights).view(mb_size, -1)  # mb_size * y_vocab_size
         n_y_words = self.y_vocab_size / self.n_sense
-        y_mean_vecs = torch.bmm(attn_weights.view(n_y_words , 1, self.n_sense),
-                                y_embeds.view(n_y_words, self.n_sense, self.embedding_dim)).squeeze(1)
+        attn_weights = attn_weights.view(mb_size * n_y_words, 1, self.n_sense)
+        y_embeds = y_embeds.view(mb_size * n_y_words, self.n_sense, self.embedding_dim)
+        y_mean_vecs = torch.bmm(attn_weights, y_embeds).squeeze(1).view(mb_size, n_y_words, self.embedding_dim)  # mb_size * n_y_word * dim
         # output
-        out = torch.mm(y_mean_vecs, hidden).transpose(0, 1)
+        y_mean_vecs = y_mean_vecs.transpose(1, 2)  # mb_size * dim * n_y_word
+        out = torch.bmm(hidden, y_mean_vecs).squeeze(1)  # mb_size * n_y_word
         log_probs = F.log_softmax(out)
         return log_probs
+    def get_attn_mask(self, inputs):
+        pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
+        return pad_attn_mask
 
 
 
 class AttnSenseNet(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size, n_sense):
         super(AttnSenseNet, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=constants.PAD)
         self.embedding_dim = embedding_dim
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
         self.n_sense = n_sense
         self.attn = nn.Linear(embedding_dim, 1)
         self.attn_softmax = nn.Softmax()
-    def forward(self, inputs):
-        n_words = inputs.size()[0] / self.n_sense
-        embeds = self.embedding(inputs)
-        # calc the context vector
-        word_mean_vecs = embeds.view(n_words, self.n_sense, -1)  # n_words * n_sense *  dim
-        word_mean_vecs = torch.mean(word_mean_vecs, dim=1).squeeze(1)  # n_words * dim
-        word_importance = self.attn(word_mean_vecs)
-        word_importance = self.attn_softmax(word_importance.transpose(0, 1)) # 1*n_word
-        context_vec = torch.mm(word_importance, word_mean_vecs).transpose(0, 1)
-        # compute attention weights
-        similarity_vec = torch.mm(embeds, context_vec)
-        attn_weights = similarity_vec.view(-1, self.n_sense)
-        attn_weights = F.softmax(attn_weights).view(1, -1) / n_words
-        # output vector
-        out = torch.mm(attn_weights, embeds)
+    def forward(self, inputs, length_weights, word_attn_mask):
+        mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
+        embeds = self.embedding(inputs) # mb_size * (max_len * embedding_dim)
+        # compute the context vector
+        embeds = embeds.view(mb_size, max_len, self.n_sense, self.embedding_dim) # take the mean over senses
+        embed_mean = torch.mean(embeds, dim=2).squeeze(2)  # mb_size * max_len * embedding_dim
+        embed_mean = embed_mean.view(-1, self.embedding_dim)  # (mb_size * max_len) * embedding_dim
+        word_importance = self.attn(embed_mean).view(mb_size, max_len)  # mb_size * max_len
+        word_importance.data.masked_fill_(word_attn_mask, -float('inf'))
+        word_importance = self.attn_softmax(word_importance).unsqueeze(1)  # mb_size * 1 * max_len
+        embed_mean = embed_mean.view(mb_size, max_len, self.embedding_dim)  # mb_size * max_len * embedding_dim
+        context_vec = torch.bmm(word_importance, embed_mean)  # mb_size * 1 * embedding_dim
+        # compute the similarities
+        embeds = embeds.view(mb_size, -1, self.embedding_dim)  # mb_size * (max_len * n_sense) * embedding_dim
+        context_vec = context_vec.transpose(1, 2)  # mb_size * embedding_dim * 1
+        similarity_vec = torch.bmm(embeds, context_vec)  # mb_size * (max_len * n_sense) * 1
+        # get the attention weights over the senses
+        attn_weights = similarity_vec.view(-1, self.n_sense)  # (mb_size * max_len) * n_sense
+        attn_weights = F.softmax(attn_weights).view(mb_size, 1,  -1)  # mb_size * 1 * (max_len * n_sense)
+        attn_weights = torch.bmm(length_weights, attn_weights).squeeze(1)  # scale by length, mb_size * (max_len * n_sense)
+        attn_mask = self.get_attn_mask(inputs)
+        attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
+        attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
+        # now use the attention to get the hidden state
+        out = torch.bmm(attn_weights, embeds).squeeze(1)
         out = self.linear(out)
         log_probs = F.log_softmax(out)
         return log_probs
+    # get the masks for computing mini-batch attention
+    def get_attn_mask(self, inputs):
+        pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
+        return pad_attn_mask
+
 
 
 class CompAttnSenseNet(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size, n_sense):
         super(CompAttnSenseNet, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=constants.PAD)
         self.embedding_dim = embedding_dim
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
         self.n_sense = n_sense
         self.attn = nn.Linear(embedding_dim, 1)
         self.attn_softmax = nn.Softmax()
-    def forward(self, inputs):
-        n_words = inputs.size()[0] / self.n_sense
-        embeds = self.embedding(inputs)
-        # compute attentions over the senses and then the attentional word mean vectors
-        mean_word_embedding = torch.mean(embeds, dim=0).transpose(0, 1)
-        sense_similarity_vec = torch.mm(embeds, mean_word_embedding)  # the similarity between word embedding and mean embedding
-        word_attn_weights = sense_similarity_vec.view(n_words, self.n_sense)  # the attention over each sense for a word
-        word_attn_weights = F.softmax(word_attn_weights).view(1, -1) # n_words * n_sense
-        word_mean_vecs = torch.bmm(word_attn_weights.view(n_words, 1, self.n_sense),
-                                   embeds.view(n_words, self.n_sense, self.embedding_dim)).squeeze(1) # n_words * dim
-        # calc the context vector
-        word_importance = self.attn(word_mean_vecs)
-        word_importance = self.attn_softmax(word_importance.transpose(0, 1)) # 1*n_word
-        context_vec = torch.mm(word_importance, word_mean_vecs).transpose(0, 1)
-        # compute attention weights over the words
-        similarity_vec = torch.mm(embeds, context_vec)
-        attn_weights = similarity_vec.view(-1, self.n_sense)
-        attn_weights = F.softmax(attn_weights).view(1, -1) / n_words
-        # output vector
-        out = torch.mm(attn_weights, embeds)
+    def forward(self, inputs, length_weights, word_attn_mask):
+        mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
+        embeds = self.embedding(inputs) # mb_size * (max_len * sense) * embedding_dim
+        # compute the attentional mean embeddings over senses
+        global_mean = torch.sum(embeds, dim=1)  # mb_size * 1 * embedding_dim
+        global_mean = torch.bmm(length_weights, global_mean).squeeze(1) / self.n_sense  # mean over all words and sense, mb_size * embedding_dim
+        global_mean = global_mean.view(mb_size, self.embedding_dim, 1)
+        sense_importance = torch.bmm(embeds, global_mean)  # similarity between global embedding and sense, mb_size * (max_len * sense) * 1
+        sense_importance = sense_importance.view(-1, self.n_sense)  # (mb_size * max_len) * sense
+        sense_importance = F.softmax(sense_importance).view(mb_size, 1, -1)  # mb_size * 1 * (max_len * sense)
+        sense_importance = sense_importance.view(mb_size * max_len, 1, self.n_sense)  # (mb_size * max_len) * 1 * n_sense
+        word_mean = torch.bmm(sense_importance, embeds.view(mb_size * max_len, self.n_sense, self.embedding_dim)).squeeze(1) # (mb_size * max_len) * dim
+        # compute the attentional mean embeddings over words
+        word_importance = self.attn(word_mean).view(mb_size, max_len)  # mb_size * max_len
+        word_importance.data.masked_fill_(word_attn_mask, -float('inf'))
+        word_importance = self.attn_softmax(word_importance).unsqueeze(1)  # mb_size * 1 * max_len
+        word_mean = word_mean.view(mb_size, max_len, self.embedding_dim)  # mb_size * max_len * embedding_dim
+        context_vec = torch.bmm(word_importance, word_mean)  # mb_size * 1 * embedding_dim
+        # compute the similarities
+        embeds = embeds.view(mb_size, -1, self.embedding_dim)  # mb_size * (max_len * n_sense) * embedding_dim
+        context_vec = context_vec.transpose(1, 2)  # mb_size * embedding_dim * 1
+        similarity_vec = torch.bmm(embeds, context_vec)  # mb_size * (max_len * n_sense) * 1
+        # get the attention weights over the senses
+        attn_mask = self.get_attn_mask(inputs)
+        attn_weights = similarity_vec.view(-1, self.n_sense)  # (mb_size * max_len) * n_sense
+        attn_weights = F.softmax(attn_weights).view(mb_size, 1,  -1)  # mb_size * 1 * (max_len * n_sense)
+        attn_weights = torch.bmm(length_weights, attn_weights).squeeze(1)  # scale by length, mb_size * (max_len * n_sense)
+        attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
+        attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
+        # now use the attention to get the hidden state
+        out = torch.bmm(attn_weights, embeds).squeeze(1)
         out = self.linear(out)
         log_probs = F.log_softmax(out)
         return log_probs
+    # get the masks for computing mini-batch attention
+    def get_attn_mask(self, inputs):
+        pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
+        return pad_attn_mask
+
+

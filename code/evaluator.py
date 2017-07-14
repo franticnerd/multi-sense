@@ -14,22 +14,42 @@ class Evaluator:
         self.dim = opt['embedding_dim']
         self.n_epoch = opt['n_epoch']
         self.dataset = opt['data_dir'].split('/')[-2]
+        self.batch_size = opt['batch_size']
 
+    # eval only accuracy
+    def eval_accuracy(self, model, test_data):
+        num_correct = 0
+        for data_batch in test_data:
+            features, length_weights, word_masks, ground_truth = self.convert_to_variable(data_batch)
+            output = model(features, length_weights, word_masks)
+            num_correct += self.get_num_correct(ground_truth, output.data)
+        accuracy = float(num_correct) / float(len(test_data) * self.batch_size)
+        return accuracy
+
+    # eval accuracy and mrr
     def eval(self, model, test_data):
         num_correct, ranks, pool_ranks = 0, [], []
-        for i in xrange(len(test_data)):
-            features, ground_truth = test_data[i]
-            ground_truth = torch.LongTensor(ground_truth)
-            output = model(Variable(torch.LongTensor(features)))
+        for data_batch in test_data:
+            features, length_weights, word_masks, ground_truth = self.convert_to_variable(data_batch)
+            output = model(features, length_weights, word_masks)
             num_correct += self.get_num_correct(ground_truth, output.data)
             ranks.extend(self.get_groundtruth_rank_full(ground_truth, output.data))
             pool_ranks.extend(self.get_groundtruth_rank_pool(ground_truth, output.data))
-        accuracy = float(num_correct) / float(len(test_data))
+        accuracy = float(num_correct) / float(len(test_data) * self.batch_size)
         mr_full = np.mean(ranks)
         mrr_full = np.mean([1.0/r for r in ranks])
         mr_pool = np.mean(pool_ranks)
         mrr_pool = np.mean([1.0/r for r in pool_ranks])
         return accuracy, mr_full, mrr_full, mr_pool, mrr_pool
+
+    def convert_to_variable(self, data_batch):
+        features = Variable(data_batch[0])
+        length_weights = Variable(1.0/data_batch[1].float()).view(-1, 1, 1)
+        word_masks = data_batch[2]
+        ground_truth = data_batch[3].view(-1, 1)
+        return features, length_weights, word_masks, ground_truth
+
+
 
 
     # check whether the ground truth appears in the top-K list, for computing the hit ratio
@@ -39,10 +59,10 @@ class Evaluator:
         correct += (predicted == ground_truth).sum()
         return correct
 
-
     def get_groundtruth_rank_full(self, ground_truth, output):
         ret = []
         for true_id, predicted in zip(ground_truth, output):
+            true_id = true_id[0]
             true_id_score = predicted[true_id]
             rank = 1
             for score in predicted:
@@ -51,11 +71,11 @@ class Evaluator:
             ret.append(rank)
         return ret
 
-
     # get the groundtruth rank from a pool of candidates
     def get_groundtruth_rank_pool(self, ground_truth, output, num_cand=10):
         ret = []
         for true_id, predicted in zip(ground_truth, output):
+            true_id = true_id[0]
             true_id_score = predicted[true_id]
             rand_idx_set = set([true_id])
             while len(rand_idx_set) < num_cand:
@@ -67,8 +87,6 @@ class Evaluator:
                     rank += 1
             ret.append(rank)
         return ret
-
-
 
     def write_performance(self, model_type, metrics, train_time):
         def get_header_string():

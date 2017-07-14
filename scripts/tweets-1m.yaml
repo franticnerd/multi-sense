@@ -24,13 +24,13 @@ train_log_file: !join [*DIR, output/train_log.txt]
 performance_file:  !join [*DIR, output/performance.txt]
 
 load_model: False
-
+save_model: True
+print_gap: 2000
 n_sense: 2
-embedding_dim: 50
-n_epoch: 10
-
+embedding_dim: 20
+n_epoch: 100
+batch_size: 64
+data_worker: 8
 K: 10
-print_gap: 20000
-# model_type_list: ['cbow', 'attn_net', 'sense_net', 'attn_sense_net', 'comp_attn_sense_net']
-# model_type_list: ['sense']
-model_type_list: ['recon']
+
+model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense', 'bidirection_sense']
