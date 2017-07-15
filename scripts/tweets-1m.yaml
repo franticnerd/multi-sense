@@ -8,29 +8,26 @@ train_ratio: 0.8
 valid_ratio: 0.1
 min_token_freq: 50
 
-
 # training
 train_data_file: !join [*DIR, input/train.txt]
 test_data_file: !join [*DIR, input/test.txt]
 valid_data_file: !join [*DIR, input/test.txt]
 x_vocab_file: !join [*DIR, input/words.txt]
 y_vocab_file: !join [*DIR, input/locations.txt]
-
+train_log_file: !join [*DIR, output/train_log.txt]
+performance_file:  !join [*DIR, output/performance.txt]
+model_path: !join [*DIR, model/]
 case_seed_file: !join [*DIR, input/case_seeds.txt]
 case_output_file: !join [*DIR, output/case_outputs.txt]
 
-model_path: !join [*DIR, model/]
-train_log_file: !join [*DIR, output/train_log.txt]
-performance_file:  !join [*DIR, output/performance.txt]
-
 load_model: False
 save_model: True
-print_gap: 2000
+data_worker: 8
 n_sense: 2
 embedding_dim: 10
-n_epoch: 100
 batch_size: 64
-data_worker: 8
+n_epoch: 100
+print_gap: 2000
 K: 10
 
 model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']

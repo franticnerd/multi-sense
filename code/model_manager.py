@@ -39,7 +39,9 @@ class ModelManager:
     def get_model_name(self, model_type):
         embedding_dim = self.opt['embedding_dim']
         batch_size = self.opt['batch_size']
-        attributes = [model_type, 'd', embedding_dim, 'batch', batch_size]
+        n_epoch = self.opt['n_epoch']
+        n_sense = self.opt['n_epoch']
+        attributes = [model_type, 'D', embedding_dim, 'B', batch_size, 'S', n_sense, 'E', n_epoch]
         model_name = format_list_to_string(attributes, '_')
         return model_name + '.model'
 

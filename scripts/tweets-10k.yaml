@@ -13,32 +13,21 @@ test_data_file: !join [*DIR, input/test.txt]
 valid_data_file: !join [*DIR, input/test.txt]
 x_vocab_file: !join [*DIR, input/words.txt]
 y_vocab_file: !join [*DIR, input/locations.txt]
-
+train_log_file: !join [*DIR, output/train_log.txt]
+performance_file:  !join [*DIR, output/performance.txt]
+model_path: !join [*DIR, model/]
 case_seed_file: !join [*DIR, input/case_seeds.txt]
 case_output_file: !join [*DIR, output/case_outputs.txt]
 
-model_path: !join [*DIR, model/]
-train_log_file: !join [*DIR, output/train_log.txt]
-performance_file:  !join [*DIR, output/performance.txt]
-
 load_model: False
 save_model: True
-
+data_worker: 4
 n_sense: 2
 embedding_dim: 5
-n_epoch: 100
-# n_epoch: 100
-
-K: 10
-print_gap: 200
 batch_size: 2
-data_worker: 4
-# model_type_list: ['recon', 'attn', 'sense', 'bilinear_sense', 'bidirection_sense', 'attn_sense', 'comp_attn_sense']
-# model_type_list: ['recon']
-# model_type_list: ['attn']
-# model_type_list: ['bilinear_sense']
-# model_type_list: ['bidirection_sense']
+n_epoch: 10
+print_gap: 200
+K: 10
+
 model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense', 'bidirection_sense']
-# model_type_list: ['sense_net', 'attn_sense_net']
-# model_type_list: ['sense_net']
 

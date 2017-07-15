@@ -91,11 +91,11 @@ class Evaluator:
     def write_performance(self, model_type, metrics, train_time):
         def get_header_string():
             header = ['acc', 'mr_f', 'mrr_f', 'mr_p', 'mrr_p',
-                      'n_sense', 'dim', 'n_epoch', 'data_dir', 'time', 'model_type']
+                      'S', 'D', 'B', 'E', 'data_set', 't_sec', 'model_type']
             return format_list_to_string(header, '\t')
         def get_perf_string(metrics, train_time):
             content = [metrics[0], metrics[1], metrics[2], metrics[3], metrics[4],
-                       self.n_sense, self.dim, self.n_epoch, self.dataset, train_time, model_type]
+                       self.n_sense, self.dim, self.batch_size, self.n_epoch, self.dataset, train_time, model_type]
             return format_list_to_string(content, '\t')
         header_string = get_header_string()
         perf_string = get_perf_string(metrics, train_time)
