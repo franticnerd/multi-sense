@@ -26,8 +26,10 @@ data_worker: 8
 n_sense: 2
 embedding_dim: 10
 batch_size: 64
+learning_rate: 0.01
 n_epoch: 100
 print_gap: 2000
 K: 10
 
-model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
+# model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
+model_type_list: ['recon', 'sense', 'comp_attn_sense', 'bilinear_sense']

@@ -23,11 +23,13 @@ load_model: False
 save_model: True
 data_worker: 4
 n_sense: 2
-embedding_dim: 5
-batch_size: 2
-n_epoch: 10
-print_gap: 200
+embedding_dim: 20
+batch_size: 4
+n_epoch: 50
+print_gap: 500
+learning_rate: 0.005
 K: 10
 
-model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense', 'bidirection_sense']
+# model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense', 'bidirection_sense']
+model_type_list: ['recon', 'sense', 'comp_attn_sense', 'bilinear_sense']
 

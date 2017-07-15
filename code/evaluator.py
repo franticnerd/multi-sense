@@ -15,6 +15,7 @@ class Evaluator:
         self.n_epoch = opt['n_epoch']
         self.dataset = opt['data_dir'].split('/')[-2]
         self.batch_size = opt['batch_size']
+        self.learning_rate = opt['learning_rate']
 
     # eval only accuracy
     def eval_accuracy(self, model, test_data):
@@ -91,11 +92,13 @@ class Evaluator:
     def write_performance(self, model_type, metrics, train_time):
         def get_header_string():
             header = ['acc', 'mr_f', 'mrr_f', 'mr_p', 'mrr_p',
-                      'S', 'D', 'B', 'E', 'data_set', 't_sec', 'model_type']
+                      'S', 'D', 'B', 'E', 'l_rate',
+                      'data_set', 't_sec', 'model_type']
             return format_list_to_string(header, '\t')
         def get_perf_string(metrics, train_time):
             content = [metrics[0], metrics[1], metrics[2], metrics[3], metrics[4],
-                       self.n_sense, self.dim, self.batch_size, self.n_epoch, self.dataset, train_time, model_type]
+                       self.n_sense, self.dim, self.batch_size, self.n_epoch, self.learning_rate,
+                       self.dataset, train_time, model_type]
             return format_list_to_string(content, '\t')
         header_string = get_header_string()
         perf_string = get_perf_string(metrics, train_time)

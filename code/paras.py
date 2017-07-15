@@ -53,6 +53,7 @@ def set_default_params():
     pd['batch_size'] = 2
     pd['n_epoch'] = 10
     pd['print_gap'] = 20
+    pd['learning_rate'] = 0.005
     pd['K'] = 2
     pd['model_type_list'] = ['recon', 'attn', 'sense', 'attn_sense', 'bilinear_sense', 'comp_attn_sense']
     # pd['model_type_list'] = ['recon']
