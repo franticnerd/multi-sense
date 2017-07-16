@@ -27,20 +27,21 @@ embedding_dim: 50
 batch_size: 4
 n_epoch: 100
 print_gap: 500
-learning_rate: 0.005
+learning_rate: 0.01
 K: 10
 
 
 eval_dim: True
-dim_list: [2, 5, 10, 15, 20, 50, 100]
+# dim_list: [2, 5, 10, 15, 20, 50, 100]
+dim_list: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200]
 
-eval_batch: True
+eval_batch: False
 batch_list: [1, 2, 4, 8, 16, 32]
 
-eval_lr: True
+eval_lr: False
 lr_list: [0.005, 0.01, 0.02, 0.05, 0.1]
 
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense', 'bidirection_sense']
 # model_type_list: ['recon', 'sense', 'comp_attn_sense', 'bilinear_sense']
-model_type_list: ['comp_attn_sense']
+model_type_list: ['recon']
 
