@@ -54,9 +54,12 @@ def set_default_params():
     pd['n_epoch'] = 10
     pd['print_gap'] = 20
     pd['learning_rate'] = 0.005
+    pd['eval_lr'] = False
+    pd['eval_batch'] = False
+    pd['eval_dim'] = False
     pd['K'] = 2
-    pd['model_type_list'] = ['recon', 'attn', 'sense', 'attn_sense', 'bilinear_sense', 'comp_attn_sense']
-    # pd['model_type_list'] = ['recon']
+    # pd['model_type_list'] = ['recon', 'attn', 'sense', 'attn_sense', 'bilinear_sense', 'comp_attn_sense']
+    pd['model_type_list'] = ['recon']
     return pd
 
 

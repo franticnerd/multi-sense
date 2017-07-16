@@ -6,19 +6,6 @@ from torch.autograd import Variable
 import constants
 
 
-# class Recon(nn.Module):
-#     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
-#         super(Recon, self).__init__()
-#         self.embedding = nn.Embedding(vocab_size, embedding_dim)
-#         self.linear = nn.Linear(embedding_dim, output_vocab_size)
-#     def forward(self, inputs):
-#         embeds = self.embedding(inputs)
-#         out = torch.mean(embeds, dim=0)
-#         out = self.linear(out)
-#         log_probs = F.log_softmax(out)
-#         return log_probs
-
-
 class Recon(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
         super(Recon, self).__init__()
@@ -108,18 +95,6 @@ class SenseNet(nn.Module):
         pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
         return pad_attn_mask
 
-    def get_embedding(self, idx):
-        return self.embedding.weight[idx]
-    def calc_similarities(self, query_embedding):
-        return torch.mm(query_embedding.view(1,-1), self.embedding.weight.transpose(0, 1))
-        # ret = []
-        # for i in xrange(self.embedding.weight.size()[0]):
-        #     embedding = self.embedding.weight[i]
-        #     norm_prod = embedding.norm() * query_embedding.norm()
-        #     denominator = np.max([1e-8, norm_prod.data[0]])
-        #     similarity = np.dot(query_embedding.data.tolist(), embedding.data.tolist()) / denominator
-        #     ret.append(similarity)
-        # return Variable(torch.Tensor(ret)).view(1, -1)
 
 
 class BilinearSenseNet(nn.Module):

@@ -22,7 +22,7 @@ class Trainer:
         # init the loss and optimizer
         self.model = model
         self.criterion = nn.NLLLoss()
-        # self.optimizer = optim.SGD(self.model.parameters(), lr=0.02, momentum=0.9)
+        # self.optimizer = optim.SGD(self.model.parameters(), lr=learning_rate, momentum=0.9)
         # self.optimizer = optim.Adam(self.model.parameters(), lr=0.01, betas=(0.9, 0.98), eps=1e-09)
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, betas=(0.9, 0.98), eps=1e-09)
 

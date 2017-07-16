@@ -125,17 +125,30 @@ class CaseEvaluator:
         case_seeds = self.load_case_seeds()
         for case in case_seeds:
             # it is a list because there can be multiple senses
-            idx_list = self.data.x_vocab.get_id(case)
+            idx_list = self.data.x_vocab.get_feature_ids(case)
             for idx in idx_list:
                 scores, neighbor_idx = self.find_topk(idx)
                 self.write_one_case(idx, neighbor_idx, scores)
 
     # find the top k similar units to the query idx
     def find_topk(self, idx):
-        embedding = self.model.get_embedding(idx)
-        similarities = self.model.calc_similarities(embedding)
+        embedder = self.model.embedding
+        query_vec = embedder.weight[idx]
+        similarities = self.calc_similarities(embedder, query_vec)
         scores, neighbor_idx = torch.topk(similarities, self.K)
         return scores.squeeze().data.tolist(), neighbor_idx.squeeze().data.tolist()
+
+    def calc_similarities(self, embedder, query_vec):
+        similarities = torch.mm(query_vec.view(1,-1), embedder.weight.transpose(0, 1))
+        return similarities
+        # ret = []
+        # for i in xrange(self.embedding.weight.size()[0]):
+        #     embedding = self.embedding.weight[i]
+        #     norm_prod = embedding.norm() * query_embedding.norm()
+        #     denominator = np.max([1e-8, norm_prod.data[0]])
+        #     similarity = np.dot(query_embedding.data.tolist(), embedding.data.tolist()) / denominator
+        #     ret.append(similarity)
+        # return Variable(torch.Tensor(ret)).view(1, -1)
 
     def load_case_seeds(self):
         ret = []
@@ -152,7 +165,7 @@ class CaseEvaluator:
             description = self.data.x_vocab.get_description(neighbor_idx)
             neighbor_info.append([description, score])
         neighbor_info = format_list_to_string(neighbor_info, '\t')
-        print neighbor_info
+        # print neighbor_info
         with open(self.case_output_file, 'a') as fout:
             fout.write(neighbor_info + '\n')
 

@@ -7,7 +7,7 @@ from paras import load_params
 from utils import set_random_seeds
 
 
-def run_one_config(opt, model_type):
+def run_one_config(opt, model_type, case_study=False):
     set_random_seeds()
     dataset = DataSet(opt, model_type)
     model_manager = ModelManager(opt)
@@ -15,14 +15,14 @@ def run_one_config(opt, model_type):
     evaluator = Evaluator(opt)
     metrics = evaluator.eval(model, dataset.test_loader)
     evaluator.write_performance(model_type, metrics, train_time)
-    # case_evaluator = CaseEvaluator(model, dataset, opt)
-    # case_evaluator.run_case_study()
+    if case_study:
+        case_evaluator = CaseEvaluator(model, dataset, opt)
+        case_evaluator.run_case_study()
 
 
-def eval_batch_size(opt):
+def eval_batch_size(opt, model_type):
     if not opt['eval_batch']:
         return
-    model_type = opt['model_type_list'][0]
     default_batch_size = opt['batch_size']
     for batch_size in opt['batch_list']:
         opt['batch_size'] = batch_size
@@ -30,10 +30,9 @@ def eval_batch_size(opt):
     opt['batch_size'] = default_batch_size
 
 
-def eval_learning_rate(opt):
+def eval_learning_rate(opt, model_type):
     if not opt['eval_lr']:
         return
-    model_type = opt['model_type_list'][0]
     default_lr = opt['learning_rate']
     for lr in opt['lr_list']:
         opt['learning_rate'] = lr
@@ -41,10 +40,9 @@ def eval_learning_rate(opt):
     opt['learning_rate'] = default_lr
 
 
-def eval_embedding_dim(opt):
+def eval_embedding_dim(opt, model_type):
     if not opt['eval_dim']:
         return
-    model_type = opt['model_type_list'][0]
     default_dim = opt['embedding_dim']
     for dim in opt['dim_list']:
         opt['embedding_dim'] = dim
@@ -54,11 +52,10 @@ def eval_embedding_dim(opt):
 
 def main(opt):
     for model_type in opt['model_type_list']:
-        run_one_config(opt, model_type)
-    eval_learning_rate(opt)
-    eval_batch_size(opt)
-    eval_embedding_dim(opt)
-
+        run_one_config(opt, model_type, True)
+        eval_learning_rate(opt, model_type)
+        eval_batch_size(opt, model_type)
+        eval_embedding_dim(opt, model_type)
 
 if __name__ == '__main__':
     para_file = None if len(sys.argv) <= 1 else sys.argv[1]
