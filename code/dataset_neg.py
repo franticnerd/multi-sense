@@ -17,7 +17,7 @@ class RelationDataset(Dataset):
         self.feature_id_offset = feature_id_offset
         # the maximum number of non-zero features in an instance
         self.max_feature_len = self.get_max_feature_len()
-        self.negative_sample = 5
+        self.negative_sample = 15
         # weights: for negative sampling
         self.weights = None
 
@@ -64,6 +64,7 @@ class RelationDataset(Dataset):
         for idx in counter:
             count = counter[idx]
             weights[idx] = math.pow(count, 0.75)
+            # weights[idx] = math.pow(count, 1.0)
         self.weights = weights / sum(weights)
 
     # get negative samples for y, used for negative sampling models

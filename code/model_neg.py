@@ -12,7 +12,8 @@ from dataset_neg import RelationDataset, Vocab
 from loss import NSNLLLoss
 from models import constants
 
-data_dir = '../data/tweets-100k/'
+# data_dir = '../data/tweets-10k/'
+data_dir = '../data/tweets-1m/'
 train_file = data_dir + 'input/train.txt'
 test_file = data_dir + 'input/test.txt'
 valid_file = data_dir + 'input/test.txt'
@@ -23,10 +24,11 @@ performance_file = data_dir + 'output/performance.txt'
 model_path = data_dir + 'model/'
 
 n_sense = 2
+# batch_size = 4
 batch_size = 128
 n_epoch = 20
-embedding_dim = 5
-n_worker = 4
+embedding_dim = 10
+n_worker = 8
 
 # load the data
 x_vocab = Vocab(x_vocab_file, n_sense, id_offset=1)
@@ -34,9 +36,9 @@ y_vocab = Vocab(y_vocab_file, n_sense, id_offset=0)
 train_data = RelationDataset(train_file, n_sense, feature_id_offset=1)
 valid_data = RelationDataset(valid_file, n_sense, feature_id_offset=1)
 test_data = RelationDataset(test_file, n_sense, feature_id_offset=1)
-train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
-valid_loader = DataLoader(valid_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
-test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
+train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=n_worker)
+valid_loader = DataLoader(valid_data, batch_size=batch_size, shuffle=True, num_workers=n_worker)
+test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=n_worker)
 x_vocab_size = x_vocab.size()
 y_vocab_size = y_vocab.size()
 train_data.gen_multinomial_dist(y_vocab_size / n_sense)
@@ -72,12 +74,14 @@ class SenseNS(nn.Module):
         # now use the attention to get the hidden state: the weighted mean over x embeddings
         hidden = torch.bmm(attn_weights, embeds)  # mb_size * 1 * dim
         # compute the similarities between context vec and y embedding
-        y_embeds = y_embeds.view(mb_size, -1, self.embedding_dim)  # mb_size * (y_len * n_sense) * embedding_dim
-        y_similarity_vec = torch.bmm(y_embeds, context_vec)  # mb_size * (y_len * n_sense) * 1
-        y_attn_weights = y_similarity_vec.view(-1, self.n_sense)  # (mb_size * y_len) * n_sense
-        y_attn_weights = F.softmax(y_attn_weights).view(mb_size * y_len, 1, self.n_sense)  # (mb_size * y_len) * 1 *  n_sense
-        y_word_mean = torch.bmm(y_attn_weights, y_embeds.view(mb_size * y_len, self.n_sense, self.embedding_dim)).squeeze(1) # (mb_size * y_len) * dim
-        y_word_mean = y_word_mean.view(mb_size, y_len, self.embedding_dim).transpose(1, 2)
+        y_embeds = y_embeds.view(mb_size, y_len, self.n_sense, self.embedding_dim)  # mb_size * (y_len * n_sense) * embedding_dim
+        y_word_mean = torch.mean(y_embeds, dim=2).squeeze(2).transpose(1, 2)
+        # y_embeds = y_embeds.view(mb_size, -1, self.embedding_dim)  # mb_size * (y_len * n_sense) * embedding_dim
+        # y_similarity_vec = torch.bmm(y_embeds, context_vec)  # mb_size * (y_len * n_sense) * 1
+        # y_attn_weights = y_similarity_vec.view(-1, self.n_sense)  # (mb_size * y_len) * n_sense
+        # y_attn_weights = F.softmax(y_attn_weights).view(mb_size * y_len, 1, self.n_sense)  # (mb_size * y_len) * 1 *  n_sense
+        # y_word_mean = torch.bmm(y_attn_weights, y_embeds.view(mb_size * y_len, self.n_sense, self.embedding_dim)).squeeze(1) # (mb_size * y_len) * dim
+        # y_word_mean = y_word_mean.view(mb_size, y_len, self.embedding_dim).transpose(1, 2)
         # compute final scores
         scores = torch.bmm(hidden, y_word_mean).squeeze(1)
         prob = F.sigmoid(scores)
@@ -150,8 +154,6 @@ def get_output(model, features, y_vocab_size):
     features = Variable(torch.LongTensor(features))
     y_labels = Variable(torch.LongTensor([i for i in xrange(y_vocab_size)]))
     return model(features, y_labels)
-
-
 
 
 def main():
