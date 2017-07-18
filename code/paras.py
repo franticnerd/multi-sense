@@ -34,7 +34,12 @@ def set_default_params():
     pd['train_ratio'] = 0.8
     pd['valid_ratio'] = 0.1
     pd['min_token_freq'] = 5
-    # for training
+    # for classifier training
+    pd['classify_train_file'] = pd['data_dir'] + 'input/classify_train.txt'
+    pd['classify_test_file'] = pd['data_dir'] + 'input/classify_test.txt'
+    pd['classify_cat_file'] = pd['data_dir'] + 'input/classify_category.txt'
+    pd['classify_train_ratio'] = 0.8
+    # for embedding training
     pd['train_data_file'] = pd['data_dir'] + 'input/train.txt'
     pd['test_data_file'] = pd['data_dir'] + 'input/test.txt'
     pd['valid_data_file'] = pd['data_dir'] + 'input/test.txt'

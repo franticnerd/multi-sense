@@ -1,4 +1,5 @@
 from random import randint
+import time
 
 import numpy as np
 import torch
@@ -13,7 +14,7 @@ from loss import NSNLLLoss
 from models import constants
 
 # data_dir = '../data/tweets-10k/'
-data_dir = '../data/tweets-1m/'
+data_dir = '../data/tweets-10k/'
 train_file = data_dir + 'input/train.txt'
 test_file = data_dir + 'input/test.txt'
 valid_file = data_dir + 'input/test.txt'
@@ -24,11 +25,10 @@ performance_file = data_dir + 'output/performance.txt'
 model_path = data_dir + 'model/'
 
 n_sense = 2
-# batch_size = 4
-batch_size = 128
-n_epoch = 20
-embedding_dim = 10
-n_worker = 8
+batch_size = 4
+n_epoch = 50
+embedding_dim = 5
+n_worker = 4
 
 # load the data
 x_vocab = Vocab(x_vocab_file, n_sense, id_offset=1)
@@ -164,8 +164,10 @@ def main():
     # train
     best_accuracy = 0
     best_metrics = None
+    total_time = 0
     for epoch in xrange(n_epoch):
         running_loss = 0.0
+        start = time.time()
         for data_batch in train_loader:
             # get the input
             x_inputs = Variable(data_batch[0])
@@ -180,6 +182,8 @@ def main():
             optimizer.step()
             # print statistics
             running_loss += loss.data[0]
+        end = time.time()
+        total_time += (end - start)
         print('[%d]  training loss: %.3f' % (epoch+1, running_loss))
         metrics = eval(model)
         accuracy = metrics[0]
@@ -190,5 +194,6 @@ def main():
     # metrics = evaluate_neg(test_data, model, y_vocab.size())
     print eval(model)
     print best_metrics
+    print 'train time:', total_time
 
 main()
