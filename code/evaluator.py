@@ -1,7 +1,15 @@
+from random import randint
+
+from sklearn.preprocessing import StandardScaler
 import numpy as np
 import torch
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_recall_fscore_support
 from torch.autograd import Variable
-from random import randint
+
+from dataset import ClassifyDataSet
 from utils import format_list_to_string, ensure_directory_exist
 from utils import read_first_line
 
@@ -110,6 +118,33 @@ class Evaluator:
             if file_header != header_string:
                 fout.write(header_string + '\n')
             fout.write(perf_string + '\n')
+
+
+    def eval_classification(self, opt, model_type, model):
+        data = ClassifyDataSet(opt, model_type, model)
+        features_train = data.features_train
+        features_test = data.features_test
+        labels_train = data.labels_train
+        labels_test = data.labels_test
+
+        standard_scaler = StandardScaler()
+        features_train = standard_scaler.fit_transform(features_train)
+        features_test = standard_scaler.transform(features_test)
+        model = self.train_classifier(features_train, labels_train)
+        print self.eval_classifier(model, features_test, labels_test)
+
+    def train_classifier(self, features, labels):
+        model = LogisticRegression()
+        model.fit(features, labels)
+        return model
+
+    def eval_classifier(self, model, features, labels):
+        expected = labels
+        predicted = model.predict(features)
+        prfs = precision_recall_fscore_support(expected, predicted)
+        precision, recall, f1 = prfs[0][1], prfs[1][1], prfs[2][1]
+        return precision, recall, f1
+
 
 
 class CaseEvaluator:

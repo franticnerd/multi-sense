@@ -50,12 +50,12 @@ def set_default_params():
     pd['model_path'] = pd['data_dir'] + 'model/'
     pd['case_seed_file'] = pd['data_dir'] + 'input/case_seeds.txt'
     pd['case_output_file'] = pd['data_dir'] + 'output/case_outputs.txt'
-    pd['load_model'] = False
+    pd['load_model'] = True
     pd['save_model'] = True
     pd['data_worker'] = 1
     pd['n_sense'] = 2
     pd['embedding_dim'] = 2
-    pd['batch_size'] = 2
+    pd['batch_size'] = 4
     pd['n_epoch'] = 10
     pd['print_gap'] = 20
     pd['learning_rate'] = 0.005
@@ -64,6 +64,7 @@ def set_default_params():
     pd['eval_dim'] = False
     pd['K'] = 2
     # pd['model_type_list'] = ['recon', 'attn', 'sense', 'attn_sense', 'bilinear_sense', 'comp_attn_sense']
+    # pd['model_type_list'] = ['attn_sense', 'recon', 'attn', 'sense', 'bilinear_sense', 'comp_attn_sense']
     pd['model_type_list'] = ['recon']
     return pd
 
@@ -74,4 +75,5 @@ def print_config(pd):
                ('embedding_dim:', pd['embedding_dim']),
                ('n_epoch:', pd['n_epoch'])]
     print format_list_to_string(content)
+
 

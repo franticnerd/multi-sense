@@ -18,6 +18,7 @@ def run_one_config(opt, model_type, case_study=False):
     if case_study:
         case_evaluator = CaseEvaluator(model, dataset, opt)
         case_evaluator.run_case_study()
+    evaluator.eval_classification(opt, model_type, model)
 
 
 def eval_batch_size(opt, model_type):
@@ -49,13 +50,23 @@ def eval_embedding_dim(opt, model_type):
         run_one_config(opt, model_type)
     opt['learning_rate'] = default_dim
 
+def eval_n_sense(opt, model_type):
+    if not opt['eval_sense']:
+        return
+    default_n_sense = opt['n_sense']
+    for n_sense in opt['n_sense_list']:
+        opt['n_sense'] = n_sense
+        run_one_config(opt, model_type)
+    opt['n_sense'] = default_n_sense
 
 def main(opt):
     for model_type in opt['model_type_list']:
+        # run_one_config(opt, model_type, False)
         run_one_config(opt, model_type, True)
         eval_learning_rate(opt, model_type)
         eval_batch_size(opt, model_type)
         eval_embedding_dim(opt, model_type)
+        eval_n_sense(opt, model_type)
 
 if __name__ == '__main__':
     para_file = None if len(sys.argv) <= 1 else sys.argv[1]

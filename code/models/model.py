@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,12 +11,16 @@ class Recon(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=constants.PAD)
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
     def forward(self, inputs, length_weights, word_attn_mask):
+        hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
+        out = self.linear(hidden)
+        log_probs = F.log_softmax(out)
+        return log_probs
+    def calc_hidden(self, inputs, length_weights, word_attn_mask):
         embeds = self.embedding(inputs)
         out = torch.sum(embeds, dim=1)
         out = torch.bmm(length_weights, out).squeeze(1)
-        out = self.linear(out)
-        log_probs = F.log_softmax(out)
-        return log_probs
+        return out
+
 
 class ReconNS(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
@@ -32,7 +35,6 @@ class ReconNS(nn.Module):
         prob = F.sigmoid(similarities)
         return prob
 
-
 class AttnNet(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
         super(AttnNet, self).__init__()
@@ -41,6 +43,11 @@ class AttnNet(nn.Module):
         self.attn = nn.Linear(embedding_dim, 1)
         self.attn_softmax = nn.Softmax()
     def forward(self, inputs, length_weights, word_attn_mask):
+        hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
+        out = self.linear(hidden)
+        log_probs = F.log_softmax(out)
+        return log_probs
+    def calc_hidden(self, inputs, length_weights, word_attn_mask):
         embeds = self.embedding(inputs)
         mb_size, max_len, embedding_dim = embeds.size()
         embeds = embeds.view(-1, embedding_dim)
@@ -50,9 +57,7 @@ class AttnNet(nn.Module):
         attn_weights = self.attn_softmax(attn_weights).unsqueeze(1)
         embeds = embeds.view(mb_size, max_len, embedding_dim)
         out = torch.bmm(attn_weights, embeds).squeeze(1)
-        out = self.linear(out)
-        log_probs = F.log_softmax(out)
-        return log_probs
+        return out
     # get the masks for computing mini-batch attention
     def get_attn_mask(self, inputs):
         pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
@@ -66,6 +71,11 @@ class SenseNet(nn.Module):
         self.n_sense = n_sense
         self.embedding_dim = embedding_dim
     def forward(self, inputs, length_weights, word_attn_mask):
+        hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
+        out = self.linear(hidden)
+        log_probs = F.log_softmax(out)
+        return log_probs
+    def calc_hidden(self, inputs, length_weights, word_attn_mask):
         mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
         embeds = self.embedding(inputs) # mb_size * (max_len * embedding_dim)
         # compute the context vector
@@ -85,11 +95,8 @@ class SenseNet(nn.Module):
         attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
         attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
         # now use the attention to get the hidden state
-        out = torch.bmm(attn_weights, embeds).squeeze(1)
-        out = self.linear(out)
-        log_probs = F.log_softmax(out)
-        return log_probs
-
+        hidden = torch.bmm(attn_weights, embeds).squeeze(1)
+        return hidden
     # get the masks for computing mini-batch attention
     def get_attn_mask(self, inputs):
         pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
@@ -106,6 +113,11 @@ class BilinearSenseNet(nn.Module):
         self.n_sense = n_sense
         self.embedding_dim = embedding_dim
     def forward(self, inputs, length_weights, word_attn_mask):
+        hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
+        out = self.linear(hidden)
+        log_probs = F.log_softmax(out)
+        return log_probs
+    def calc_hidden(self, inputs, length_weights, word_attn_mask):
         mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
         embeds = self.embedding(inputs) # mb_size * (max_len * embedding_dim)
         # compute the context vector
@@ -126,10 +138,8 @@ class BilinearSenseNet(nn.Module):
         attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
         attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
         # now use the attention to get the hidden state
-        out = torch.bmm(attn_weights, embeds).squeeze(1)
-        out = self.linear(out)
-        log_probs = F.log_softmax(out)
-        return log_probs
+        hidden = torch.bmm(attn_weights, embeds).squeeze(1)
+        return hidden
     # get the masks for computing mini-batch attention
     def get_attn_mask(self, inputs):
         pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
@@ -199,6 +209,11 @@ class AttnSenseNet(nn.Module):
         self.attn = nn.Linear(embedding_dim, 1)
         self.attn_softmax = nn.Softmax()
     def forward(self, inputs, length_weights, word_attn_mask):
+        hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
+        out = self.linear(hidden)
+        log_probs = F.log_softmax(out)
+        return log_probs
+    def calc_hidden(self, inputs, length_weights, word_attn_mask):
         mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
         embeds = self.embedding(inputs) # mb_size * (max_len * embedding_dim)
         # compute the context vector
@@ -223,9 +238,7 @@ class AttnSenseNet(nn.Module):
         attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
         # now use the attention to get the hidden state
         out = torch.bmm(attn_weights, embeds).squeeze(1)
-        out = self.linear(out)
-        log_probs = F.log_softmax(out)
-        return log_probs
+        return out
     # get the masks for computing mini-batch attention
     def get_attn_mask(self, inputs):
         pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
@@ -243,6 +256,11 @@ class CompAttnSenseNet(nn.Module):
         self.attn = nn.Linear(embedding_dim, 1)
         self.attn_softmax = nn.Softmax()
     def forward(self, inputs, length_weights, word_attn_mask):
+        hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
+        out = self.linear(hidden)
+        log_probs = F.log_softmax(out)
+        return log_probs
+    def calc_hidden(self, inputs, length_weights, word_attn_mask):
         mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
         embeds = self.embedding(inputs) # mb_size * (max_len * sense) * embedding_dim
         # compute the attentional mean embeddings over senses
@@ -273,9 +291,7 @@ class CompAttnSenseNet(nn.Module):
         attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
         # now use the attention to get the hidden state
         out = torch.bmm(attn_weights, embeds).squeeze(1)
-        out = self.linear(out)
-        log_probs = F.log_softmax(out)
-        return log_probs
+        return out
     # get the masks for computing mini-batch attention
     def get_attn_mask(self, inputs):
         pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len

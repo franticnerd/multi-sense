@@ -7,7 +7,7 @@ import torch
 import torch.optim as optim
 from torch.autograd import Variable
 
-from dataset import RelationDataset, Vocab
+from dataset import RelationData, Vocab
 from eval_neg import evaluate_neg
 from loss import NSNLLLoss
 from models.model import AttnNet, SenseNet, AttnSenseNet, CompAttnSenseNet
@@ -20,8 +20,8 @@ def load_data(model_type, pd):
     multi_sense, n_sense = set_sense_paras(model_type, pd)
     x_vocab = Vocab(pd['x_vocab_file'], multi_sense, n_sense)
     y_vocab = Vocab(pd['y_vocab_file'], False, 1)
-    train_data = RelationDataset(pd['train_data_file'], multi_sense, n_sense)
-    test_data = RelationDataset(pd['test_data_file'], multi_sense, n_sense)
+    train_data = RelationData(pd['train_data_file'], multi_sense, n_sense)
+    test_data = RelationData(pd['test_data_file'], multi_sense, n_sense)
     train_data.gen_multinomial_dist(y_vocab.size())
     return train_data, test_data, x_vocab, y_vocab
 

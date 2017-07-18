@@ -1,15 +1,15 @@
 import math
 from collections import Counter
 
-import torch
 import numpy as np
 import numpy.random as nprd
 import pandas as pd
+import torch
+from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 
 
-class RelationDataset(Dataset):
-
+class RelationData(Dataset):
     def __init__(self, data_file, n_sense=1, feature_id_offset=0):
         self.instances = pd.read_table(data_file, header=None)
         self.n_sense = n_sense
@@ -17,7 +17,6 @@ class RelationDataset(Dataset):
         self.feature_id_offset = feature_id_offset
         # the maximum number of non-zero features in an instance
         self.max_feature_len = self.get_max_feature_len()
-
     def get_max_feature_len(self):
         max_len = 0
         for idx in xrange(len(self.instances)):
@@ -25,10 +24,8 @@ class RelationDataset(Dataset):
             if len(features) > max_len:
                 max_len = len(features)
         return max_len
-
     def __len__(self):
         return len(self.instances)
-
     def __getitem__(self, idx):
         label = self.instances.ix[idx, 0]
         feature_input = map(int, str(self.instances.ix[idx, 1]).strip().split())
@@ -44,7 +41,6 @@ class RelationDataset(Dataset):
                 features[pos] = value
             word_mask[i] = 0
         return torch.from_numpy(features), torch.LongTensor([feature_length]), torch.from_numpy(word_mask).byte(), torch.LongTensor([label])
-
     # TODO: need to modify the following functions to account for offset
     # get the weights for sampling from multinomial distributions, used for negative sampling models
     def gen_multinomial_dist(self, n_label):
@@ -55,7 +51,6 @@ class RelationDataset(Dataset):
             count = counter[idx]
             weights[idx] = math.pow(count, 0.75)
         self.weights = weights / sum(weights)
-
     # get negative samples for y, used for negative sampling models
     def sample_negatives(self, n_sample, tgt_idx):
         n_label = len(self.weights)
@@ -96,6 +91,43 @@ class Vocab:
         return [raw_id * self.n_sense + i + self.id_offset for i in xrange(self.n_sense)]
 
 
+# the dataset for classification
+class ClassifyDataSet:
+    def __init__(self, opt, model_type, model):
+        n_sense = 1 if model_type in ['recon', 'attn'] else opt['n_sense']
+        train_file = opt['classify_train_file']
+        test_file = opt['classify_test_file']
+        batch_size = opt['batch_size']
+        n_worker = opt['data_worker']
+        # self.y_vocab = Vocab(y_vocab_file, n_sense)
+        train_data = RelationData(train_file, n_sense, feature_id_offset=1)
+        test_data = RelationData(test_file, n_sense, feature_id_offset=1)
+        self.features_train, self.labels_train = self.load_data(train_data, batch_size, n_worker, model)
+        self.features_test, self.labels_test = self.load_data(test_data, batch_size, n_worker, model)
+
+    def load_data(self, dataset, batch_size, n_worker, model):
+        features, labels = [], []
+        data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=n_worker)
+        for data_batch in data_loader:
+            batch_features, batch_labels = self.transform(data_batch, model)
+            features.extend(batch_features)
+            labels.extend(batch_labels)
+        return features, labels
+
+
+    # transform a data batch into features and labels
+    def transform(self, data_batch, model):
+        # get the input
+        inputs = Variable(data_batch[0])
+        length_weights = Variable(1.0/data_batch[1].float()).view(-1, 1, 1)
+        word_masks = data_batch[2]
+        labels = data_batch[3].view(-1)
+        # forward
+        features = model.calc_hidden(inputs, length_weights, word_masks)
+        return features.data.tolist(), labels.tolist()
+
+
+
 class DataSet:
     def __init__(self, opt, model_type):
         n_sense = 1 if model_type in ['recon', 'attn'] else opt['n_sense']
@@ -110,16 +142,10 @@ class DataSet:
         self.x_vocab = Vocab(x_vocab_file, n_sense, id_offset=1)
         self.y_vocab = Vocab(y_vocab_file, 1)
         # self.y_vocab = Vocab(y_vocab_file, n_sense)
-        train_data = RelationDataset(train_file, n_sense, feature_id_offset=1)
-        valid_data = RelationDataset(valid_file, n_sense, feature_id_offset=1)
-        test_data = RelationDataset(test_file, n_sense, feature_id_offset=1)
+        train_data = RelationData(train_file, n_sense, feature_id_offset=1)
+        valid_data = RelationData(valid_file, n_sense, feature_id_offset=1)
+        test_data = RelationData(test_file, n_sense, feature_id_offset=1)
         self.train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
         self.valid_loader = DataLoader(valid_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
         self.test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
-
-        # # for debug mode
-        # for batched in self.train_loader:
-        #     print batched[0]
-        #     print batched[1]
-        #     print batched[2]
 
