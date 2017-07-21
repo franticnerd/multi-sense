@@ -107,14 +107,14 @@ def run(pd):
     word_dict = td.gen_word_dict(min_freq=pd['min_token_freq'])
     word_dict.write_to_file(pd['x_vocab_file'])
     # build spatial vocab
-    # spatial_grid = td.gen_spatial_grid(pd['grid_list'], min_freq=pd['min_token_freq'])
-    # spatial_grid.write_to_file(pd['y_vocab_file'])
-    # # split data
-    # train_db, valid_db, test_db = split_data(td, pd['train_ratio'], pd['valid_ratio'])
-    # # write train and test data into file
-    # write_data(train_db, word_dict, spatial_grid, pd['train_data_file'])
-    # write_data(valid_db, word_dict, spatial_grid, pd['valid_data_file'])
-    # write_data(test_db, word_dict, spatial_grid, pd['test_data_file'])
+    spatial_grid = td.gen_spatial_grid(pd['grid_list'], min_freq=pd['min_token_freq'])
+    spatial_grid.write_to_file(pd['y_vocab_file'])
+    # split data
+    train_db, valid_db, test_db = split_data(td, pd['train_ratio'], pd['valid_ratio'])
+    # write train and test data into file
+    write_data(train_db, word_dict, spatial_grid, pd['train_data_file'])
+    write_data(valid_db, word_dict, spatial_grid, pd['valid_data_file'])
+    write_data(test_db, word_dict, spatial_grid, pd['test_data_file'])
     train_ratio = pd['classify_train_ratio']
     train_file = pd['classify_train_file']
     test_file = pd['classify_test_file']

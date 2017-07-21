@@ -40,7 +40,7 @@ class ModelManager:
         embedding_dim = self.opt['embedding_dim']
         batch_size = self.opt['batch_size']
         n_epoch = self.opt['n_epoch']
-        n_sense = self.opt['n_epoch']
+        n_sense = self.opt['n_sense']
         attributes = [model_type, 'D', embedding_dim, 'B', batch_size, 'S', n_sense, 'E', n_epoch]
         model_name = format_list_to_string(attributes, '_')
         return model_name + '.model'
