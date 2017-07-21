@@ -25,7 +25,7 @@ classify_test_file: !join [*DIR, input/classify_test.txt]
 classify_cat_file: !join [*DIR, input/classify_category.txt]
 classify_train_ratio: 0.8
 
-load_model: True
+load_model: False
 save_model: True
 data_worker: 8
 n_sense: 2
@@ -33,17 +33,20 @@ embedding_dim: 50
 batch_size: 1024
 learning_rate: 0.005
 n_epoch: 20
-print_gap: 500
+print_gap: 100
 K: 10
 
-eval_dim: False
+eval_dim: True
 dim_list: [100, 200]
 
 eval_batch: True
 batch_list: [2048, 4096]
 
-eval_lr: False
-lr_list: [0.001, 0.002, 0.003, 0.004, 0.005, 0.01]
+eval_lr: True
+lr_list: [0.001, 0.002, 0.003, 0.004, 0.01]
+
+eval_sense: True
+n_sense_list: [2,3,4,5,6,7,8,9,10]
 
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
-model_type_list: ['sense']
+model_type_list: ['comp_attn_sense']
