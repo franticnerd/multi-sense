@@ -36,21 +36,22 @@ learning_rate: 0.005
 K: 10
 
 
-eval_dim: False
+eval_dim: True
 # dim_list: [2, 5, 10, 15, 20, 50, 100]
-dim_list: [20, 80, 100, 150, 200]
+dim_list: [30, 40, 50, 80, 100, 200]
 
-eval_batch: False
-batch_list: [32, 64, 128]
+eval_batch: True
+batch_list: [512, 1024]
 
-eval_lr: False
+eval_lr: True
 lr_list: [0.001, 0.002, 0.003, 0.004, 0.005, 0.01]
 
-eval_sense: False
-n_sense_list: [1,2,3,4,5,6,7,8,9,10]
+eval_sense: True
+n_sense_list: [3,4,5]
 
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense', 'bidirection_sense']
-model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
+# model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
+model_type_list: ['comp_attn_sense']
 # model_type_list: ['recon', 'comp_attn_sense']
 # model_type_list: ['recon']
 # model_type_list: ['recon', 'sense', 'comp_attn_sense', 'bilinear_sense']

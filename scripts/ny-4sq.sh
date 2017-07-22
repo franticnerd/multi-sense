@@ -1,7 +1,7 @@
 config='ny-4sq.yaml'
 
 # Preprocessing data
-python ../code/preprocess.py $config
+# python ../code/preprocess.py $config
 
 # Run
 export MKL_NUM_THREADS=15
