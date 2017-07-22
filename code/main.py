@@ -20,6 +20,10 @@ def run_one_config(opt, model_type, case_study=False):
         case_evaluator.run_case_study()
     # evaluator.eval_classification(opt, model_type, model)
 
+def eval_error_analysis(opt):
+    evaluator = Evaluator(opt)
+    evaluator.write_error_results(opt)
+
 def eval_batch_size(opt, model_type):
     if not opt['eval_batch']:
         return
@@ -47,7 +51,7 @@ def eval_embedding_dim(opt, model_type):
     for dim in opt['dim_list']:
         opt['embedding_dim'] = dim
         run_one_config(opt, model_type)
-    opt['learning_rate'] = default_dim
+    opt['embedding_dim'] = default_dim
 
 def eval_n_sense(opt, model_type):
     if not opt['eval_sense']:
@@ -60,12 +64,13 @@ def eval_n_sense(opt, model_type):
 
 def main(opt):
     for model_type in opt['model_type_list']:
-        # run_one_config(opt, model_type, False)
         run_one_config(opt, model_type, True)
-        eval_learning_rate(opt, model_type)
-        eval_batch_size(opt, model_type)
-        eval_embedding_dim(opt, model_type)
-        eval_n_sense(opt, model_type)
+        # run_one_config(opt, model_type, True)
+        # eval_learning_rate(opt, model_type)
+        # eval_batch_size(opt, model_type)
+        # eval_embedding_dim(opt, model_type)
+        # eval_n_sense(opt, model_type)
+    eval_error_analysis(opt)
 
 if __name__ == '__main__':
     para_file = None if len(sys.argv) <= 1 else sys.argv[1]

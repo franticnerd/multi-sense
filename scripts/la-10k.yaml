@@ -19,29 +19,31 @@ model_path: !join [*DIR, model/]
 case_seed_file: !join [*DIR, input/case_seeds.txt]
 case_output_file: !join [*DIR, output/case_outputs.txt]
 
+error_analysis_path: !join [*DIR, output/]
+error_instance_file: !join [*DIR, output/instance-]
+
 classify_train_file: !join [*DIR, input/classify_train.txt]
 classify_test_file: !join [*DIR, input/classify_test.txt]
 classify_cat_file: !join [*DIR, input/classify_category.txt]
 classify_train_ratio: 0.8
 
-load_model: False
+load_model: True
 save_model: True
 data_worker: 4
 n_sense: 2
-embedding_dim: 100
+embedding_dim: 50
 batch_size: 32
 n_epoch: 50
 print_gap: 100
 learning_rate: 0.002
 K: 10
 
-
 eval_dim: False
 # dim_list: [2, 5, 10, 15, 20, 50, 100]
-dim_list: [20, 80, 100, 150, 200]
+dim_list: [10, 20, 30, 40, 80, 100, 200]
 
 eval_batch: False
-batch_list: [32, 64, 128]
+batch_list: [4, 8, 16, 64]
 
 eval_lr: False
 lr_list: [0.001, 0.002, 0.003, 0.004, 0.005, 0.01]
@@ -51,9 +53,12 @@ n_sense_list: [1,2,3,4,5,6,7,8,9,10]
 
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense', 'bidirection_sense']
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
-model_type_list: ['recon', 'comp_attn_sense']
 # model_type_list: ['recon']
 # model_type_list: ['recon', 'sense', 'comp_attn_sense', 'bilinear_sense']
 # model_type_list: ['sense', 'comp_attn_sense', 'bilinear_sense']
 # model_type_list: ['sense']
 
+# the two models for error analysis comparison
+
+model_type_list: ['recon', 'sense']
+cmp_model_type_list: ['recon', 'sense']

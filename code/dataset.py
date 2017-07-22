@@ -127,7 +127,6 @@ class ClassifyDataSet:
         return features.data.tolist(), labels.tolist()
 
 
-
 class DataSet:
     def __init__(self, opt, model_type):
         n_sense = 1 if model_type in ['recon', 'attn'] else opt['n_sense']
@@ -145,7 +144,7 @@ class DataSet:
         train_data = RelationData(train_file, n_sense, feature_id_offset=1)
         valid_data = RelationData(valid_file, n_sense, feature_id_offset=1)
         test_data = RelationData(test_file, n_sense, feature_id_offset=1)
-        self.train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
+        self.train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=n_worker)
         self.valid_loader = DataLoader(valid_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
         self.test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
 

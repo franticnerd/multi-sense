@@ -1,5 +1,7 @@
 from random import randint
+import pandas as pd
 
+from dataset import Vocab
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 import torch
@@ -37,11 +39,13 @@ class Evaluator:
 
     # eval accuracy and mrr
     def eval(self, model, test_data):
-        num_correct, ranks, pool_ranks = 0, [], []
+        num_correct, ranks, pool_ranks, correct_idx = 0, [], [], []
         for data_batch in test_data:
             features, length_weights, word_masks, ground_truth = self.convert_to_variable(data_batch)
             output = model(features, length_weights, word_masks)
             num_correct += self.get_num_correct(ground_truth, output.data)
+            batch_correct = self.get_correct_idx(ground_truth, output.data)
+            correct_idx.extend(batch_correct)
             ranks.extend(self.get_groundtruth_rank_full(ground_truth, output.data))
             pool_ranks.extend(self.get_groundtruth_rank_pool(ground_truth, output.data))
         accuracy = float(num_correct) / float(len(test_data) * self.batch_size)
@@ -49,7 +53,7 @@ class Evaluator:
         mrr_full = np.mean([1.0/r for r in ranks])
         mr_pool = np.mean(pool_ranks)
         mrr_pool = np.mean([1.0/r for r in pool_ranks])
-        return accuracy, mr_full, mrr_full, mr_pool, mrr_pool
+        return accuracy, mr_full, mrr_full, mr_pool, mrr_pool, correct_idx
 
     def convert_to_variable(self, data_batch):
         features = Variable(data_batch[0])
@@ -58,15 +62,17 @@ class Evaluator:
         ground_truth = data_batch[3].view(-1, 1)
         return features, length_weights, word_masks, ground_truth
 
-
-
-
     # check whether the ground truth appears in the top-K list, for computing the hit ratio
     def get_num_correct(self, ground_truth, output):
         correct = 0
         _, predicted = torch.max(output, 1)
         correct += (predicted == ground_truth).sum()
         return correct
+
+    # check whether the ground truth appears in the top-K list, for computing the hit ratio
+    def get_correct_idx(self, ground_truth, output):
+        _, predicted = torch.max(output, 1)
+        return (predicted == ground_truth).view(-1).tolist()
 
     def get_groundtruth_rank_full(self, ground_truth, output):
         ret = []
@@ -108,6 +114,7 @@ class Evaluator:
                        self.n_sense, self.dim, self.batch_size, self.n_epoch, self.learning_rate,
                        self.dataset, train_time, model_type]
             return format_list_to_string(content, '\t')
+        # quantitative analysis
         header_string = get_header_string()
         perf_string = get_perf_string(metrics, train_time)
         print header_string + '\n' + perf_string
@@ -118,7 +125,12 @@ class Evaluator:
             if file_header != header_string:
                 fout.write(header_string + '\n')
             fout.write(perf_string + '\n')
-
+        # error analysis
+        error_indicator = metrics[-1]
+        error_indicator_file = self.opt['error_analysis_path'] + str(model_type) + '.txt'
+        with open(error_indicator_file, 'w') as fout:
+            for element in error_indicator:
+                fout.write(str(element) + '\n')
 
     def eval_classification(self, opt, model_type, model):
         data = ClassifyDataSet(opt, model_type, model)
@@ -145,6 +157,61 @@ class Evaluator:
         precision, recall, f1 = prfs[0][1], prfs[1][1], prfs[2][1]
         return precision, recall, f1
 
+    def write_error_results(self, opt):
+        model_a_name, model_b_name = opt['cmp_model_type_list']
+        model_a_file = opt['error_analysis_path'] + model_a_name + '.txt'
+        model_b_file = opt['error_analysis_path'] + model_b_name + '.txt'
+        model_a_indicator = pd.read_table(model_a_file, header=None).ix[:, 0]
+        model_b_indicator = pd.read_table(model_b_file, header=None).ix[:, 0]
+        test_file = opt['test_data_file']
+        test_instances = pd.read_table(test_file, header=None).as_matrix()
+        x_vocab_file = opt['x_vocab_file']
+        vocab = Vocab(x_vocab_file, n_sense=1, id_offset=0)
+        instances = self.select_better_instances(test_instances, model_a_indicator, model_b_indicator)
+        # where model b makes correct predictions but model a does not
+        output_file = opt['error_instance_file'] + model_a_name + '-0-' + model_b_name + '-1-.txt'
+        self.write_model_instances(instances, vocab, output_file)
+        instances = self.select_better_instances(test_instances, model_b_indicator, model_a_indicator)
+        # where model a makes correct predictions but model b does not
+        output_file = opt['error_instance_file'] + model_a_name + '-1-' + model_b_name + '-0-.txt'
+        self.write_model_instances(instances, vocab, output_file)
+        # where both model a and b make correct predictions
+        instances = self.select_equal_instances(test_instances, model_a_indicator, model_b_indicator, 1)
+        output_file = opt['error_instance_file'] + model_a_name + '-1-' + model_b_name + '-1-.txt'
+        self.write_model_instances(instances, vocab, output_file)
+        # where both model a and b make wrong predictions
+        instances = self.select_equal_instances(test_instances, model_a_indicator, model_b_indicator, 0)
+        output_file = opt['error_instance_file'] + model_a_name + '-0-' + model_b_name + '-0-.txt'
+        self.write_model_instances(instances, vocab, output_file)
+
+    # select the instances where b is better than a
+    def select_better_instances(self, instances, indicator_a, indicator_b):
+        b_better_instances = []
+        for i in xrange(instances.shape[0]):
+            if indicator_b[i] > indicator_a[i]:
+                b_better_instances.append(instances[i])
+        return b_better_instances
+
+
+    def select_equal_instances(self, instances, indicator_a, indicator_b, target):
+        ret = []
+        for i in xrange(instances.shape[0]):
+            if indicator_a[i] == target and indicator_b[i] == target:
+                ret.append(instances[i])
+        return ret
+
+
+    def write_model_instances(self, instances, vocab, output_file):
+        with open(output_file, 'w') as fout:
+            for e in instances:
+                instance_string = self.get_instance_string(e, vocab)
+                fout.write(instance_string + '\n')
+
+    def get_instance_string(self, instance, vocab):
+        feature_idx = instance[1].split()
+        feature_idx = [int(e) for e in feature_idx]
+        instance_attributes = [vocab.get_description(idx) for idx in feature_idx]
+        return format_list_to_string(instance_attributes, sep=' ')
 
 
 class CaseEvaluator:

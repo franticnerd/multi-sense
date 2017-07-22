@@ -1,7 +1,6 @@
 data_dir: &DIR ../data/tweets-1m/
 
 # preprocessing
-# raw_data_file: /shared/data/kzhang53/embedding/la/input/tweets.txt
 raw_data_file: /shared/data/czhang82/source/tweets-www/clean/tweets.txt
 grid_list: [100, 100]
 train_ratio: 0.8
@@ -20,12 +19,15 @@ model_path: !join [*DIR, model/]
 case_seed_file: !join [*DIR, input/case_seeds.txt]
 case_output_file: !join [*DIR, output/case_outputs.txt]
 
+error_analysis_path: !join [*DIR, output/]
+error_instance_file: !join [*DIR, output/instance-]
+
 classify_train_file: !join [*DIR, input/classify_train.txt]
 classify_test_file: !join [*DIR, input/classify_test.txt]
 classify_cat_file: !join [*DIR, input/classify_category.txt]
 classify_train_ratio: 0.8
 
-load_model: False
+load_model: True
 save_model: True
 data_worker: 8
 n_sense: 2
@@ -36,17 +38,19 @@ n_epoch: 20
 print_gap: 100
 K: 10
 
-eval_dim: True
+eval_dim: False
 dim_list: [100, 200]
 
-eval_batch: True
+eval_batch: False
 batch_list: [2048, 4096]
 
-eval_lr: True
+eval_lr: False
 lr_list: [0.001, 0.002, 0.003, 0.004, 0.01]
 
-eval_sense: True
+eval_sense: False
 n_sense_list: [2,3,4,5,6,7,8,9,10]
 
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
-model_type_list: ['comp_attn_sense']
+
+model_type_list: ['recon', 'sense']
+cmp_model_type_list: ['recon', 'sense']

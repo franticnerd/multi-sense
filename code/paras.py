@@ -26,7 +26,7 @@ def load_params(para_file):
 
 
 def set_default_params():
-    pd = dict()
+    pd = defaultdict()
     pd['data_dir'] = '../data/toy/'
     # for preprocessing
     pd['raw_data_file'] = '/Users/chao/data/source/tweets-dev/clean/tweets.txt'
@@ -50,6 +50,9 @@ def set_default_params():
     pd['model_path'] = pd['data_dir'] + 'model/'
     pd['case_seed_file'] = pd['data_dir'] + 'input/case_seeds.txt'
     pd['case_output_file'] = pd['data_dir'] + 'output/case_outputs.txt'
+    pd['error_analysis_path'] = pd['data_dir'] + 'output/'
+    pd['error_instance_file'] = pd['data_dir'] + 'output/error-case-'
+    pd['cmp_model_type_list'] = ['recon', 'comp_attn_sense']
     pd['load_model'] = True
     pd['save_model'] = True
     pd['data_worker'] = 1
@@ -62,10 +65,11 @@ def set_default_params():
     pd['eval_lr'] = False
     pd['eval_batch'] = False
     pd['eval_dim'] = False
+    pd['eval_sense'] = False
     pd['K'] = 2
     # pd['model_type_list'] = ['recon', 'attn', 'sense', 'attn_sense', 'bilinear_sense', 'comp_attn_sense']
     # pd['model_type_list'] = ['attn_sense', 'recon', 'attn', 'sense', 'bilinear_sense', 'comp_attn_sense']
-    pd['model_type_list'] = ['recon']
+    pd['model_type_list'] = ['recon', 'comp_attn_sense']
     return pd
 
 
