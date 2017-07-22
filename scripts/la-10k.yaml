@@ -27,11 +27,12 @@ classify_test_file: !join [*DIR, input/classify_test.txt]
 classify_cat_file: !join [*DIR, input/classify_category.txt]
 classify_train_ratio: 0.8
 
-load_model: True
+load_pretrained: True
+load_model: False
 save_model: True
 data_worker: 4
 n_sense: 2
-embedding_dim: 50
+embedding_dim: 100
 batch_size: 32
 n_epoch: 50
 print_gap: 100
@@ -39,7 +40,6 @@ learning_rate: 0.002
 K: 10
 
 eval_dim: False
-# dim_list: [2, 5, 10, 15, 20, 50, 100]
 dim_list: [10, 20, 30, 40, 80, 100, 200]
 
 eval_batch: False
@@ -60,5 +60,5 @@ n_sense_list: [1,2,3,4,5,6,7,8,9,10]
 
 # the two models for error analysis comparison
 
-model_type_list: ['recon', 'sense']
-cmp_model_type_list: ['recon', 'sense']
+model_type_list: ['recon', 'sense', 'comp_attn_sense']
+cmp_model_type_list: ['recon', 'comp_attn_sense']

@@ -53,7 +53,8 @@ def set_default_params():
     pd['error_analysis_path'] = pd['data_dir'] + 'output/'
     pd['error_instance_file'] = pd['data_dir'] + 'output/error-case-'
     pd['cmp_model_type_list'] = ['recon', 'comp_attn_sense']
-    pd['load_model'] = True
+    pd['load_pretrained'] = True
+    pd['load_model'] = False
     pd['save_model'] = True
     pd['data_worker'] = 1
     pd['n_sense'] = 2
@@ -69,7 +70,7 @@ def set_default_params():
     pd['K'] = 2
     # pd['model_type_list'] = ['recon', 'attn', 'sense', 'attn_sense', 'bilinear_sense', 'comp_attn_sense']
     # pd['model_type_list'] = ['attn_sense', 'recon', 'attn', 'sense', 'bilinear_sense', 'comp_attn_sense']
-    pd['model_type_list'] = ['recon', 'comp_attn_sense']
+    pd['model_type_list'] = ['sense']
     return pd
 
 

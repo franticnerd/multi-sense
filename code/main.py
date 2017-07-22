@@ -18,7 +18,7 @@ def run_one_config(opt, model_type, case_study=False):
     if case_study:
         case_evaluator = CaseEvaluator(model, dataset, opt)
         case_evaluator.run_case_study()
-    # evaluator.eval_classification(opt, model_type, model)
+    evaluator.eval_classification(opt, model_type, model)
 
 def eval_error_analysis(opt):
     evaluator = Evaluator(opt)

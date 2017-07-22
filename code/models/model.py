@@ -21,7 +21,6 @@ class Recon(nn.Module):
         out = torch.bmm(length_weights, out).squeeze(1)
         return out
 
-
 class ReconNS(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size):
         super(ReconNS, self).__init__()
@@ -70,6 +69,16 @@ class SenseNet(nn.Module):
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
         self.n_sense = n_sense
         self.embedding_dim = embedding_dim
+    def init_with_pretrained(self, recon_model):
+        recon_embedding_weight_matrix = recon_model.embedding.weight
+        n_words = (self.embedding.weight.size()[0] - 1) / self.n_sense
+        assert recon_embedding_weight_matrix.size()[1] == self.embedding_dim
+        assert recon_embedding_weight_matrix.size()[0] == n_words + 1
+        for i in xrange(n_words):
+            idx = i * self.n_sense + 1
+            for j in xrange(self.embedding_dim):
+                self.embedding.weight.data[idx, j] = recon_embedding_weight_matrix.data[i+1, j]
+        print 'Done initializing the embedding weights'
     def forward(self, inputs, length_weights, word_attn_mask):
         hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
         out = self.linear(hidden)
@@ -255,6 +264,16 @@ class CompAttnSenseNet(nn.Module):
         self.n_sense = n_sense
         self.attn = nn.Linear(embedding_dim, 1)
         self.attn_softmax = nn.Softmax()
+    def init_with_pretrained(self, recon_model):
+        recon_embedding_weight_matrix = recon_model.embedding.weight
+        n_words = (self.embedding.weight.size()[0] - 1) / self.n_sense
+        assert recon_embedding_weight_matrix.size()[1] == self.embedding_dim
+        assert recon_embedding_weight_matrix.size()[0] == n_words + 1
+        for i in xrange(n_words):
+            idx = i * self.n_sense + 1
+            for j in xrange(self.embedding_dim):
+                self.embedding.weight.data[idx, j] = recon_embedding_weight_matrix.data[i+1, j]
+        print 'Done initializing the embedding weights'
     def forward(self, inputs, length_weights, word_attn_mask):
         hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
         out = self.linear(hidden)
