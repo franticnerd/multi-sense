@@ -32,7 +32,7 @@ class ModelManager:
                 print 'Model file not exist. Cannot load pre-trained Recon model.'
         trainer = Trainer(model, self.opt, model_type)
         train_time = trainer.train(dataset.train_loader, dataset.valid_loader, self)
-        self.load_model(model, model_type)  # load the best model
+        # self.load_model(model, model_type)  # load the best model
         return model, train_time
 
     def load_model(self, model, model_type):

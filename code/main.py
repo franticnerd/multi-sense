@@ -6,18 +6,17 @@ from model_manager import ModelManager
 from paras import load_params
 from utils import set_random_seeds
 
-
 def run_one_config(opt, model_type, case_study=False):
     set_random_seeds()
     dataset = DataSet(opt, model_type)
     model_manager = ModelManager(opt)
     model, train_time = model_manager.build_model(model_type, dataset)
-    evaluator = Evaluator(opt)
-    metrics = evaluator.eval(model, model_type, dataset.test_loader)
-    evaluator.write_performance(model_type, metrics, train_time)
-    if case_study:
-        case_evaluator = CaseEvaluator(model, dataset, opt)
-        case_evaluator.run_case_study()
+    # evaluator = Evaluator(opt)
+    # metrics = evaluator.eval(model, model_type, dataset.test_loader)
+    # evaluator.write_performance(model_type, metrics, train_time)
+    # if case_study:
+    #     case_evaluator = CaseEvaluator(model, dataset, opt)
+    #     case_evaluator.run_case_study()
 
 def eval_error_analysis(opt):
     try:

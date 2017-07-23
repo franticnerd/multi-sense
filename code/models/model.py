@@ -114,7 +114,6 @@ class SenseNet(nn.Module):
         return pad_attn_mask
 
 
-
 class BilinearSenseNet(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size, n_sense):
         super(BilinearSenseNet, self).__init__()
@@ -128,6 +127,16 @@ class BilinearSenseNet(nn.Module):
         out = self.linear(hidden)
         log_probs = F.log_softmax(out)
         return log_probs
+    def init_with_pretrained(self, recon_model):
+        recon_embedding_weight_matrix = recon_model.embedding.weight
+        n_words = (self.embedding.weight.size()[0] - 1) / self.n_sense
+        assert recon_embedding_weight_matrix.size()[1] == self.embedding_dim
+        assert recon_embedding_weight_matrix.size()[0] == n_words + 1
+        for i in xrange(n_words):
+            idx = i * self.n_sense + 1
+            for j in xrange(self.embedding_dim):
+                self.embedding.weight.data[idx, j] = recon_embedding_weight_matrix.data[i+1, j]
+        print 'Done initializing the embedding weights'
     def calc_hidden(self, inputs, length_weights, word_attn_mask):
         mb_size, max_len = inputs.size()[0], inputs.size()[1] / self.n_sense
         embeds = self.embedding(inputs) # mb_size * (max_len * embedding_dim)
@@ -209,7 +218,6 @@ class BidirectionSenseNet(nn.Module):
         return pad_attn_mask
 
 
-
 class AttnSenseNet(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size, n_sense):
         super(AttnSenseNet, self).__init__()
@@ -254,8 +262,6 @@ class AttnSenseNet(nn.Module):
     def get_attn_mask(self, inputs):
         pad_attn_mask = inputs.data.eq(constants.PAD)   # mb_size x max_len
         return pad_attn_mask
-
-
 
 class CompAttnSenseNet(nn.Module):
     def __init__(self, vocab_size, embedding_dim, output_vocab_size, n_sense):

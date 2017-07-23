@@ -39,6 +39,7 @@ class Evaluator:
 
     # eval accuracy and mrr
     def eval(self, model, model_type, test_data):
+        print 'start evaluating'
         num_correct, ranks, pool_ranks, correct_idx = 0, [], [], []
         for data_batch in test_data:
             features, length_weights, word_masks, ground_truth = self.convert_to_variable(data_batch)
@@ -53,7 +54,7 @@ class Evaluator:
         mrr_full = np.mean([1.0/r for r in ranks])
         mr_pool = np.mean(pool_ranks)
         mrr_pool = np.mean([1.0/r for r in pool_ranks])
-
+        print accuracy, mr_full, mrr_full, mr_pool, mrr_pool
         precision, recall, f1 = self.eval_classification(model, model_type)
         return accuracy, mr_full, mrr_full, mr_pool, mrr_pool, precision, recall, f1, correct_idx
 
