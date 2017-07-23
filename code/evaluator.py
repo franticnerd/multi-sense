@@ -38,7 +38,7 @@ class Evaluator:
         return accuracy
 
     # eval accuracy and mrr
-    def eval(self, model, test_data):
+    def eval(self, model, model_type, test_data):
         num_correct, ranks, pool_ranks, correct_idx = 0, [], [], []
         for data_batch in test_data:
             features, length_weights, word_masks, ground_truth = self.convert_to_variable(data_batch)
@@ -53,7 +53,9 @@ class Evaluator:
         mrr_full = np.mean([1.0/r for r in ranks])
         mr_pool = np.mean(pool_ranks)
         mrr_pool = np.mean([1.0/r for r in pool_ranks])
-        return accuracy, mr_full, mrr_full, mr_pool, mrr_pool, correct_idx
+
+        precision, recall, f1 = self.eval_classification(model, model_type)
+        return accuracy, mr_full, mrr_full, mr_pool, mrr_pool, precision, recall, f1, correct_idx
 
     def convert_to_variable(self, data_batch):
         features = Variable(data_batch[0])
@@ -105,12 +107,12 @@ class Evaluator:
 
     def write_performance(self, model_type, metrics, train_time):
         def get_header_string():
-            header = ['acc', 'mr_f', 'mrr_f', 'mr_p', 'mrr_p',
+            header = ['acc', 'mr_f', 'mrr_f', 'mr_p', 'mrr_p', 'pre', 'rec', 'f1',
                       'S', 'D', 'B', 'E', 'l_rate',
                       'data_set', 't_sec', 'model_type']
             return format_list_to_string(header, '\t')
         def get_perf_string(metrics, train_time):
-            content = [metrics[0], metrics[1], metrics[2], metrics[3], metrics[4],
+            content = [metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], metrics[6], metrics[7],
                        self.n_sense, self.dim, self.batch_size, self.n_epoch, self.learning_rate,
                        self.dataset, train_time, model_type]
             return format_list_to_string(content, '\t')
@@ -132,8 +134,12 @@ class Evaluator:
             for element in error_indicator:
                 fout.write(str(element) + '\n')
 
-    def eval_classification(self, opt, model_type, model):
-        data = ClassifyDataSet(opt, model_type, model)
+    def eval_classification(self, model_type, model):
+        try:
+            data = ClassifyDataSet(self.opt, model_type, model)
+        except:
+            print 'Cannot load classification data set.'
+            return 0, 0, 0
         features_train = data.features_train
         features_test = data.features_test
         labels_train = data.labels_train
@@ -143,7 +149,7 @@ class Evaluator:
         features_train = standard_scaler.fit_transform(features_train)
         features_test = standard_scaler.transform(features_test)
         model = self.train_classifier(features_train, labels_train)
-        print self.eval_classifier(model, features_test, labels_test)
+        return self.eval_classifier(model, features_test, labels_test)
 
     def train_classifier(self, features, labels):
         model = LogisticRegression()
@@ -224,13 +230,17 @@ class CaseEvaluator:
         self.K = opt['K']
 
     def run_case_study(self):
-        case_seeds = self.load_case_seeds()
-        for case in case_seeds:
-            # it is a list because there can be multiple senses
-            idx_list = self.data.x_vocab.get_feature_ids(case)
-            for idx in idx_list:
-                scores, neighbor_idx = self.find_topk(idx)
-                self.write_one_case(idx, neighbor_idx, scores)
+        try:
+            case_seeds = self.load_case_seeds()
+            for case in case_seeds:
+                # it is a list because there can be multiple senses
+                idx_list = self.data.x_vocab.get_feature_ids(case)
+                for idx in idx_list:
+                    scores, neighbor_idx = self.find_topk(idx)
+                    self.write_one_case(idx, neighbor_idx, scores)
+        except:
+            print 'Case study failed. Check whether the given cases are valid.'
+            return
 
     # find the top k similar units to the query idx
     def find_topk(self, idx):

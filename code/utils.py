@@ -10,7 +10,8 @@ def format_list_to_string(l, sep='\n'):
         if type(e) == float or type(e) == np.float64:
             ret.append(format_float_to_string(e))
         elif type(e) == list or type(e) == tuple:
-            ret.append(format_list_to_string(e, '\t'))
+            # ret.append(format_list_to_string(e, '\t'))
+            ret.append(format_list_to_string(e, ' '))
         else:
             ret.append(str(e))
     return sep.join(ret)

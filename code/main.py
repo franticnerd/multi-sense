@@ -13,16 +13,19 @@ def run_one_config(opt, model_type, case_study=False):
     model_manager = ModelManager(opt)
     model, train_time = model_manager.build_model(model_type, dataset)
     evaluator = Evaluator(opt)
-    metrics = evaluator.eval(model, dataset.test_loader)
+    metrics = evaluator.eval(model, model_type, dataset.test_loader)
     evaluator.write_performance(model_type, metrics, train_time)
     if case_study:
         case_evaluator = CaseEvaluator(model, dataset, opt)
         case_evaluator.run_case_study()
-    # evaluator.eval_classification(opt, model_type, model)
 
 def eval_error_analysis(opt):
-    evaluator = Evaluator(opt)
-    evaluator.write_error_results(opt)
+    try:
+        evaluator = Evaluator(opt)
+        evaluator.write_error_results(opt)
+    except:
+        print 'Compare model failed. Please check whether the given models exist.'
+        return
 
 def eval_batch_size(opt, model_type):
     if not opt['eval_batch']:

@@ -51,7 +51,9 @@ class ModelManager:
         batch_size = self.opt['batch_size']
         n_epoch = self.opt['n_epoch']
         n_sense = self.opt['n_sense']
-        attributes = [model_type, 'D', embedding_dim, 'B', batch_size, 'S', n_sense, 'E', n_epoch]
+        lr = self.opt['learning_rate']
+        load_pretrain= 1 if self.opt['load_pretrained'] else 0
+        attributes = [model_type, 'D', embedding_dim, 'B', batch_size, 'S', n_sense, 'E', n_epoch, 'lr', lr, 'pre', load_pretrain]
         model_name = format_list_to_string(attributes, '_')
         return model_name + '.model'
 

@@ -27,9 +27,11 @@ def load_params(para_file):
 
 def set_default_params():
     pd = defaultdict()
-    pd['data_dir'] = '../data/toy/'
+    pd['data_dir'] = '../data/text-toy/'
+    # pd['data_dir'] = '../data/toy/'
     # for preprocessing
-    pd['raw_data_file'] = '/Users/chao/data/source/tweets-dev/clean/tweets.txt'
+    # pd['raw_data_file'] = '/Users/chao/data/source/tweets-dev/clean/tweets.txt'
+    pd['raw_data_file'] = '/Users/chao/data/source/text-dev/text.txt'
     pd['grid_list'] = [100, 100]
     pd['train_ratio'] = 0.8
     pd['valid_ratio'] = 0.1
@@ -54,13 +56,13 @@ def set_default_params():
     pd['error_instance_file'] = pd['data_dir'] + 'output/error-case-'
     pd['cmp_model_type_list'] = ['recon', 'comp_attn_sense']
     pd['load_pretrained'] = True
-    pd['load_model'] = False
+    pd['load_model'] = True
     pd['save_model'] = True
     pd['data_worker'] = 1
     pd['n_sense'] = 2
     pd['embedding_dim'] = 2
     pd['batch_size'] = 4
-    pd['n_epoch'] = 10
+    pd['n_epoch'] = 5
     pd['print_gap'] = 20
     pd['learning_rate'] = 0.005
     pd['eval_lr'] = False
@@ -70,7 +72,7 @@ def set_default_params():
     pd['K'] = 2
     # pd['model_type_list'] = ['recon', 'attn', 'sense', 'attn_sense', 'bilinear_sense', 'comp_attn_sense']
     # pd['model_type_list'] = ['attn_sense', 'recon', 'attn', 'sense', 'bilinear_sense', 'comp_attn_sense']
-    pd['model_type_list'] = ['sense']
+    pd['model_type_list'] = ['recon']
     return pd
 
 

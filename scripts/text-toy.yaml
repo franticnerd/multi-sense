@@ -1,0 +1,36 @@
+data_dir: &DIR ../data/text-toy/
+
+# preprocessing
+raw_data_file: /Users/chao/data/source/text-dev/text.txt
+train_ratio: 0.8
+min_token_freq: 5
+
+# training
+train_data_file: !join [*DIR, input/train.txt]
+test_data_file: !join [*DIR, input/test.txt]
+valid_data_file: !join [*DIR, input/test.txt]
+x_vocab_file: !join [*DIR, input/words.txt]
+y_vocab_file: !join [*DIR, input/locations.txt]
+train_log_file: !join [*DIR, output/train_log.txt]
+performance_file:  !join [*DIR, output/performance.txt]
+model_path: !join [*DIR, model/]
+case_seed_file: !join [*DIR, input/case_seeds.txt]
+case_output_file: !join [*DIR, output/case_outputs.txt]
+
+error_analysis_path: !join [*DIR, output/]
+error_instance_file: !join [*DIR, output/instance-]
+
+load_pretrained: False
+load_model: False
+save_model: True
+data_worker: 4
+n_sense: 2
+embedding_dim: 10
+batch_size: 32
+n_epoch: 2
+print_gap: 100
+learning_rate: 0.002
+K: 10
+
+model_type_list: ['recon', 'sense']
+cmp_model_type_list: ['recon', 'sense']
