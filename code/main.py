@@ -18,7 +18,7 @@ def run_one_config(opt, model_type, case_study=False):
     if case_study:
         case_evaluator = CaseEvaluator(model, dataset, opt)
         case_evaluator.run_case_study()
-    evaluator.eval_classification(opt, model_type, model)
+    # evaluator.eval_classification(opt, model_type, model)
 
 def eval_error_analysis(opt):
     evaluator = Evaluator(opt)
@@ -66,9 +66,9 @@ def main(opt):
     for model_type in opt['model_type_list']:
         run_one_config(opt, model_type, True)
         # run_one_config(opt, model_type, True)
-        # eval_learning_rate(opt, model_type)
-        # eval_batch_size(opt, model_type)
-        # eval_embedding_dim(opt, model_type)
+        eval_learning_rate(opt, model_type)
+        eval_batch_size(opt, model_type)
+        eval_embedding_dim(opt, model_type)
         # eval_n_sense(opt, model_type)
     eval_error_analysis(opt)
 

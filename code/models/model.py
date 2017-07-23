@@ -78,6 +78,8 @@ class SenseNet(nn.Module):
             idx = i * self.n_sense + 1
             for j in xrange(self.embedding_dim):
                 self.embedding.weight.data[idx, j] = recon_embedding_weight_matrix.data[i+1, j]
+        # self.linear.weight.data.copy_(recon_model.linear.weight.data)
+        # self.linear.bias.data.copy_(recon_model.linear.bias.data)
         print 'Done initializing the embedding weights'
     def forward(self, inputs, length_weights, word_attn_mask):
         hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)

@@ -27,7 +27,8 @@ classify_test_file: !join [*DIR, input/classify_test.txt]
 classify_cat_file: !join [*DIR, input/classify_category.txt]
 classify_train_ratio: 0.8
 
-load_model: True
+load_pretrained: True
+load_model: False
 save_model: True
 data_worker: 8
 n_sense: 2
@@ -48,9 +49,9 @@ eval_lr: False
 lr_list: [0.001, 0.002, 0.003, 0.004, 0.01]
 
 eval_sense: False
-n_sense_list: [2,3,4,5,6,7,8,9,10]
+n_sense_list: [3,4,5]
 
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
 
-model_type_list: ['recon', 'sense']
-cmp_model_type_list: ['recon', 'sense']
+model_type_list: ['recon', 'sense', 'comp_attn_sense']
+cmp_model_type_list: ['recon', 'comp_attn_sense']
