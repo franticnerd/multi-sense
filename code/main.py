@@ -76,6 +76,7 @@ def main(opt):
     eval_error_analysis(opt)
 
 if __name__ == '__main__':
+    # para_file = '../scripts/la-10k.yaml'
     para_file = None if len(sys.argv) <= 1 else sys.argv[1]
     opt = load_params(para_file)  # load parameters as a dict
     main(opt)

@@ -1,11 +1,11 @@
-data_dir: &DIR ../data/tweets-la-10k/
+data_dir: &DIR ../data/text8/
 
 # preprocessing
-raw_data_file: /Users/chao/data/source/tweets-la-10k/clean/tweets.txt
-grid_list: [50, 50]
-train_ratio: 0.7
+raw_data_file: /Users/chao/data/source/text8/text.txt
+grid_list: [100, 100]
+train_ratio: 0.8
 valid_ratio: 0.1
-min_token_freq: 10
+min_token_freq: 200
 
 # training
 train_data_file: !join [*DIR, input/train.txt]
@@ -28,37 +28,30 @@ classify_cat_file: !join [*DIR, input/classify_category.txt]
 classify_train_ratio: 0.8
 
 load_pretrained: False
-load_model: True
+load_model: False
 save_model: True
-data_worker: 4
+data_worker: 8
 n_sense: 2
-embedding_dim: 100
-batch_size: 32
-n_epoch: 100
+embedding_dim: 50
+batch_size: 2048
+learning_rate: 0.005
+n_epoch: 1
 print_gap: 100
-learning_rate: 0.002
 K: 10
 
 eval_dim: False
-dim_list: [25, 50, 150]
+dim_list: [100, 200]
 
 eval_batch: False
-batch_list: [4, 8, 16, 64]
+batch_list: [2048, 4096]
 
 eval_lr: False
-lr_list: [0.001, 0.002, 0.003, 0.004, 0.005]
+lr_list: [0.001, 0.002, 0.003, 0.004, 0.01]
 
 eval_sense: False
 n_sense_list: [3,4,5]
 
-# model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense', 'bidirection_sense']
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
-# model_type_list: ['recon']
-# model_type_list: ['recon', 'sense', 'comp_attn_sense', 'bilinear_sense']
-# model_type_list: ['sense', 'comp_attn_sense', 'bilinear_sense']
-# model_type_list: ['sense']
-
-# the two models for error analysis comparison
 
 model_type_list: ['recon', 'sense', 'comp_attn_sense']
-cmp_model_type_list: ['recon', 'sense']
+cmp_model_type_list: ['recon', 'comp_attn_sense']

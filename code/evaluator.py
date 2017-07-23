@@ -134,7 +134,7 @@ class Evaluator:
             for element in error_indicator:
                 fout.write(str(element) + '\n')
 
-    def eval_classification(self, model_type, model):
+    def eval_classification(self, model, model_type):
         try:
             data = ClassifyDataSet(self.opt, model_type, model)
         except:
