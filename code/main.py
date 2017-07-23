@@ -6,7 +6,6 @@ from model_manager import ModelManager
 from paras import load_params
 from utils import set_random_seeds
 
-
 def run_one_config(opt, model_type, case_study=False):
     set_random_seeds()
     dataset = DataSet(opt, model_type)
