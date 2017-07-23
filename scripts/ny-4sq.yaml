@@ -32,11 +32,11 @@ load_model: False
 save_model: True
 data_worker: 8
 n_sense: 2
-embedding_dim: 100
+embedding_dim: 50
 batch_size: 256
-n_epoch: 20
+n_epoch: 50
 print_gap: 1000
-learning_rate: 0.005
+learning_rate: 0.002
 K: 10
 
 eval_dim: False
