@@ -24,7 +24,7 @@ class Trainer:
         self.criterion = nn.NLLLoss()
         # self.optimizer = optim.SGD(self.model.parameters(), lr=learning_rate, momentum=0.9)
         # self.optimizer = optim.Adam(self.model.parameters(), lr=0.01, betas=(0.9, 0.98), eps=1e-09)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, betas=(0.85, 0.98), eps=1e-09, weight_decay=1e-4)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, betas=(0.85, 0.98), eps=1e-09, weight_decay=1e-5)
 
     def train(self, train_data, validation_data, model_manager):
         best_accuracy = 0

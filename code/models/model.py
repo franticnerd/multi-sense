@@ -104,6 +104,7 @@ class SenseNet(nn.Module):
         attn_weights = torch.bmm(length_weights, attn_weights).squeeze(1)  # scale by length, mb_size * (max_len * n_sense)
         attn_mask = self.get_attn_mask(inputs)
         attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
+        print attn_weights.view(-1, self.n_sense)
         attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
         # now use the attention to get the hidden state
         hidden = torch.bmm(attn_weights, embeds).squeeze(1)
@@ -272,15 +273,24 @@ class CompAttnSenseNet(nn.Module):
         self.n_sense = n_sense
         self.attn = nn.Linear(embedding_dim, 1)
         self.attn_softmax = nn.Softmax()
-    def init_with_pretrained(self, recon_model):
-        recon_embedding_weight_matrix = recon_model.embedding.weight
-        n_words = (self.embedding.weight.size()[0] - 1) / self.n_sense
-        assert recon_embedding_weight_matrix.size()[1] == self.embedding_dim
-        assert recon_embedding_weight_matrix.size()[0] == n_words + 1
-        for i in xrange(n_words):
-            idx = i * self.n_sense + 1
+    # def init_with_pretrained(self, recon_model):
+    #     recon_embedding_weight_matrix = recon_model.embedding.weight
+    #     n_words = (self.embedding.weight.size()[0] - 1) / self.n_sense
+    #     assert recon_embedding_weight_matrix.size()[1] == self.embedding_dim
+    #     assert recon_embedding_weight_matrix.size()[0] == n_words + 1
+    #     for i in xrange(n_words):
+    #         idx = i * self.n_sense + 1
+    #         for j in xrange(self.embedding_dim):
+    #             self.embedding.weight.data[idx, j] = recon_embedding_weight_matrix.data[i+1, j]
+    #     print 'Done initializing the embedding weights'
+    def init_with_pretrained(self, sense_model):
+        sense_embedding_weight_matrix = sense_model.embedding.weight
+        x_vocab_size = self.embedding.weight.size()[0]
+        assert sense_embedding_weight_matrix.size()[1] == self.embedding_dim
+        assert sense_embedding_weight_matrix.size()[0] == x_vocab_size
+        for i in xrange(x_vocab_size):
             for j in xrange(self.embedding_dim):
-                self.embedding.weight.data[idx, j] = recon_embedding_weight_matrix.data[i+1, j]
+                self.embedding.weight.data[i, j] = sense_embedding_weight_matrix.data[i, j]
         print 'Done initializing the embedding weights'
     def forward(self, inputs, length_weights, word_attn_mask):
         hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
@@ -315,6 +325,7 @@ class CompAttnSenseNet(nn.Module):
         attn_weights = F.softmax(attn_weights).view(mb_size, 1,  -1)  # mb_size * 1 * (max_len * n_sense)
         attn_weights = torch.bmm(length_weights, attn_weights).squeeze(1)  # scale by length, mb_size * (max_len * n_sense)
         attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
+        # print attn_weights.view(-1, self.n_sense)
         attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
         # now use the attention to get the hidden state
         out = torch.bmm(attn_weights, embeds).squeeze(1)

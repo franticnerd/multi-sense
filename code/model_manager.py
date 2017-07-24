@@ -22,17 +22,26 @@ class ModelManager:
                 return model, train_time
             except:
                 print 'Model file not exist. Start training model from scratch.'
-        if self.opt['load_pretrained'] and model_type != 'recon':
-            try:
-                recon = Recon((x_vocab_size - 1) / self.n_sense + 1, self.embedding_dim, y_vocab_size)
-                recon_model_file_name = self.opt['model_path'] + self.get_model_name('recon')
-                recon.load_state_dict(torch.load(recon_model_file_name))
-                model.init_with_pretrained(recon)
-            except:
-                print 'Model file not exist. Cannot load pre-trained Recon model.'
+        if self.opt['load_pretrained']:
+            if model_type == 'comp_attn_sense':
+                try:
+                    sense = SenseNet(x_vocab_size, self.embedding_dim, y_vocab_size, self.n_sense)
+                    sense_model_file_name = self.opt['model_path'] + self.get_model_name('sense')
+                    sense.load_state_dict(torch.load(sense_model_file_name))
+                    model.init_with_pretrained(sense)
+                except:
+                    print 'Model file not exist. Cannot load pre-trained Recon model.'
+            elif model_type != 'recon':
+                try:
+                    recon = Recon((x_vocab_size - 1) / self.n_sense + 1, self.embedding_dim, y_vocab_size)
+                    recon_model_file_name = self.opt['model_path'] + self.get_model_name('recon')
+                    recon.load_state_dict(torch.load(recon_model_file_name))
+                    model.init_with_pretrained(recon)
+                except:
+                    print 'Model file not exist. Cannot load pre-trained Recon model.'
         trainer = Trainer(model, self.opt, model_type)
         train_time = trainer.train(dataset.train_loader, dataset.valid_loader, self)
-        # self.load_model(model, model_type)  # load the best model
+        self.load_model(model, model_type)  # load the best model
         return model, train_time
 
     def load_model(self, model, model_type):
