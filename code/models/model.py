@@ -104,7 +104,7 @@ class SenseNet(nn.Module):
         attn_weights = torch.bmm(length_weights, attn_weights).squeeze(1)  # scale by length, mb_size * (max_len * n_sense)
         attn_mask = self.get_attn_mask(inputs)
         attn_weights.data.masked_fill_(attn_mask, 0)  # mb_size * (max_len * n_sense)
-        print attn_weights.view(-1, self.n_sense)
+        # print attn_weights.view(-1, self.n_sense)
         attn_weights = attn_weights.view(mb_size, 1, -1)  # mb_size * 1 * (max_len * n_sense)
         # now use the attention to get the hidden state
         hidden = torch.bmm(attn_weights, embeds).squeeze(1)
