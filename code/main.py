@@ -14,9 +14,10 @@ def run_one_config(opt, model_type, case_study=False):
     evaluator = Evaluator(opt)
     metrics = evaluator.eval(model, model_type, dataset.test_loader)
     evaluator.write_performance(model_type, metrics, train_time)
-    if case_study:
-        case_evaluator = CaseEvaluator(model, dataset, opt)
-        case_evaluator.run_case_study()
+    # if case_study:
+    #     case_evaluator = CaseEvaluator(model, dataset, opt)
+    #     case_evaluator.write_similar_sense()
+        # case_evaluator.run_case_study()
 
 def eval_error_analysis(opt):
     try:
@@ -72,7 +73,7 @@ def main(opt):
         # eval_batch_size(opt, model_type)
         # eval_embedding_dim(opt, model_type)
         # eval_n_sense(opt, model_type)
-    eval_error_analysis(opt)
+    # eval_error_analysis(opt)
 
 if __name__ == '__main__':
     # para_file = '../scripts/la-10k.yaml'

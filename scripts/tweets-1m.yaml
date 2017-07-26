@@ -21,6 +21,7 @@ case_output_file: !join [*DIR, output/case_outputs.txt]
 
 error_analysis_path: !join [*DIR, output/]
 error_instance_file: !join [*DIR, output/instance-]
+same_sense_file: !join [*DIR, output/same_sense.txt]
 
 classify_train_file: !join [*DIR, input/classify_train.txt]
 classify_test_file: !join [*DIR, input/classify_test.txt]
@@ -32,9 +33,9 @@ load_model: False
 save_model: True
 data_worker: 8
 n_sense: 2
-embedding_dim: 50
+embedding_dim: 100
 batch_size: 1024
-learning_rate: 0.02
+learning_rate: 0.005
 n_epoch: 20
 print_gap: 100
 K: 10
@@ -54,4 +55,5 @@ n_sense_list: [3,4,5]
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
 
 model_type_list: ['recon', 'sense']
+# model_type_list: ['sense']
 cmp_model_type_list: ['recon', 'sense']

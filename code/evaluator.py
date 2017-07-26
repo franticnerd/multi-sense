@@ -231,6 +231,36 @@ class CaseEvaluator:
         self.case_seed_file = opt['case_seed_file']
         self.case_output_file = opt['case_output_file']
         self.K = opt['K']
+        self.opt = opt
+
+    def write_similar_sense(self):
+        n_sense = self.opt['n_sense']
+        if n_sense != 2:
+            return
+        embedding_matrix = self.model.embedding.weight.data
+        n_word = (embedding_matrix.size()[0] - 1) / 2
+        print 'total number of words:', n_word
+        words = []
+        for i in xrange(n_word):
+            idx = i * n_sense + 1
+            vec_a = embedding_matrix[idx]
+            vec_b = embedding_matrix[idx + 1]
+            if self.is_similar(vec_a, vec_b):
+                word = self.data.x_vocab.get_description(idx)
+                # print word
+                words.append(word)
+        output_file = self.opt['same_sense_file']
+        with open(output_file, 'w') as fout:
+            for w in words:
+                fout.write(w + '\n')
+
+    def is_similar(self, vec_a, vec_b):
+        similarity = self.calc_cosine(vec_a, vec_b)
+        return True if similarity >= 1.0 - 1e-2 else False
+        # similarity = torch.norm(vec_a - vec_b)
+        # # if similarity <= 1e-3:
+        # #     print similarity
+        # return True if similarity <= 1e-2 else False
 
     def run_case_study(self):
         try:
@@ -254,16 +284,21 @@ class CaseEvaluator:
         return scores.squeeze().data.tolist(), neighbor_idx.squeeze().data.tolist()
 
     def calc_similarities(self, embedder, query_vec):
-        similarities = torch.mm(query_vec.view(1,-1), embedder.weight.transpose(0, 1))
-        return similarities
-        # ret = []
-        # for i in xrange(self.embedding.weight.size()[0]):
-        #     embedding = self.embedding.weight[i]
-        #     norm_prod = embedding.norm() * query_embedding.norm()
-        #     denominator = np.max([1e-8, norm_prod.data[0]])
-        #     similarity = np.dot(query_embedding.data.tolist(), embedding.data.tolist()) / denominator
-        #     ret.append(similarity)
-        # return Variable(torch.Tensor(ret)).view(1, -1)
+        # similarities = torch.mm(query_vec.view(1,-1), embedder.weight.transpose(0, 1))
+        # return similarities
+        ret = []
+        for i in xrange(embedder.weight.size()[0]):
+            embedding = embedder.weight.data[i]
+            similarity = self.calc_cosine(query_vec.data, embedding)
+            ret.append(similarity)
+        return Variable(torch.Tensor(ret)).view(1, -1)
+
+
+    def calc_cosine(self, query_vec, embedding):
+        norm_prod = embedding.norm() * query_vec.norm()
+        denominator = np.max([1e-8, norm_prod])
+        return np.dot(query_vec.tolist(), embedding.tolist()) / denominator
+
 
     def load_case_seeds(self):
         ret = []

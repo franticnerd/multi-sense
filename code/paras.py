@@ -52,6 +52,7 @@ def set_default_params():
     pd['model_path'] = pd['data_dir'] + 'model/'
     pd['case_seed_file'] = pd['data_dir'] + 'input/case_seeds.txt'
     pd['case_output_file'] = pd['data_dir'] + 'output/case_outputs.txt'
+    pd['same_sense_file'] = pd['data_dir'] + 'output/same_sense.txt'
     pd['error_analysis_path'] = pd['data_dir'] + 'output/'
     pd['error_instance_file'] = pd['data_dir'] + 'output/error-case-'
     pd['cmp_model_type_list'] = ['recon', 'comp_attn_sense']
@@ -72,7 +73,7 @@ def set_default_params():
     pd['K'] = 2
     # pd['model_type_list'] = ['recon', 'attn', 'sense', 'attn_sense', 'bilinear_sense', 'comp_attn_sense']
     # pd['model_type_list'] = ['attn_sense', 'recon', 'attn', 'sense', 'bilinear_sense', 'comp_attn_sense']
-    pd['model_type_list'] = ['sense']
+    pd['model_type_list'] = ['recon', 'sense']
     return pd
 
 
