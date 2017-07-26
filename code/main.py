@@ -68,9 +68,9 @@ def main(opt):
     for model_type in opt['model_type_list']:
         run_one_config(opt, model_type, True)
         # run_one_config(opt, model_type, True)
-        eval_learning_rate(opt, model_type)
-        eval_batch_size(opt, model_type)
-        eval_embedding_dim(opt, model_type)
+        # eval_learning_rate(opt, model_type)
+        # eval_batch_size(opt, model_type)
+        # eval_embedding_dim(opt, model_type)
         # eval_n_sense(opt, model_type)
     eval_error_analysis(opt)
 
