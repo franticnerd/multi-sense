@@ -29,6 +29,7 @@ class Evaluator:
 
     # eval only accuracy
     def eval_accuracy(self, model, test_data):
+        model.eval()
         num_correct = 0
         for data_batch in test_data:
             features, length_weights, word_masks, ground_truth = self.convert_to_variable(data_batch)
@@ -40,6 +41,7 @@ class Evaluator:
     # eval accuracy and mrr
     def eval(self, model, model_type, test_data):
         print 'start evaluating'
+        model.eval()
         num_correct, ranks, pool_ranks, correct_idx = 0, [], [], []
         for data_batch in test_data:
             features, length_weights, word_masks, ground_truth = self.convert_to_variable(data_batch)

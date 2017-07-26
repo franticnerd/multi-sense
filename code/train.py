@@ -40,6 +40,7 @@ class Trainer:
         return end - start
 
     def train_one_epoch(self, train_data, epoch):
+        self.model.train()
         running_loss = 0.0
         for i, data_batch in enumerate(train_data):
             # get the input

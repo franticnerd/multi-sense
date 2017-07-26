@@ -63,11 +63,12 @@ class AttnNet(nn.Module):
         return pad_attn_mask
 
 class SenseNet(nn.Module):
-    def __init__(self, vocab_size, embedding_dim, output_vocab_size, n_sense):
+    def __init__(self, vocab_size, embedding_dim, output_vocab_size, n_sense, dropout=0.5):
         super(SenseNet, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=constants.PAD)
         self.linear = nn.Linear(embedding_dim, output_vocab_size)
         self.n_sense = n_sense
+        self.dropout = nn.Dropout(dropout)
         self.embedding_dim = embedding_dim
     def init_with_pretrained(self, recon_model):
         recon_embedding_weight_matrix = recon_model.embedding.weight
@@ -83,6 +84,7 @@ class SenseNet(nn.Module):
         print 'Done initializing the embedding weights'
     def forward(self, inputs, length_weights, word_attn_mask):
         hidden = self.calc_hidden(inputs, length_weights, word_attn_mask)
+        hidden = self.dropout(hidden)
         out = self.linear(hidden)
         log_probs = F.log_softmax(out)
         return log_probs
