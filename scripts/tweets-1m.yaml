@@ -33,15 +33,15 @@ load_model: False
 save_model: True
 data_worker: 8
 n_sense: 2
-embedding_dim: 100
+embedding_dim: 200
 batch_size: 1024
 learning_rate: 0.005
 n_epoch: 20
 print_gap: 100
 K: 10
 
-eval_dim: False
-dim_list: [100, 200]
+eval_dim: True
+dim_list: [300, 400, 50]
 
 eval_batch: False
 batch_list: [2048, 4096]
