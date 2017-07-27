@@ -10,6 +10,8 @@ class ModelManager:
         self.opt = opt
         self.n_sense = opt['n_sense']
         self.embedding_dim = opt['embedding_dim']
+        self.model_path = opt['data_dir'] + 'model/'
+        self.dropout = opt['dropout']
 
     def build_model(self, model_type, dataset):
         x_vocab_size = dataset.x_vocab.size()
@@ -25,7 +27,7 @@ class ModelManager:
         if self.opt['load_pretrained']:
             if model_type == 'comp_attn_sense':
                 try:
-                    sense = SenseNet(x_vocab_size, self.embedding_dim, y_vocab_size, self.n_sense)
+                    sense = SenseNet(x_vocab_size, self.embedding_dim, y_vocab_size, self.n_sense, self.dropout)
                     sense_model_file_name = self.opt['model_path'] + self.get_model_name('sense')
                     sense.load_state_dict(torch.load(sense_model_file_name))
                     model.init_with_pretrained(sense)
@@ -33,7 +35,7 @@ class ModelManager:
                     print 'Model file not exist. Cannot load pre-trained Recon model.'
             elif model_type != 'recon':
                 try:
-                    recon = Recon((x_vocab_size - 1) / self.n_sense + 1, self.embedding_dim, y_vocab_size)
+                    recon = Recon((x_vocab_size - 1) / self.n_sense + 1, self.embedding_dim, y_vocab_size, self.dropout)
                     recon_model_file_name = self.opt['model_path'] + self.get_model_name('recon')
                     recon.load_state_dict(torch.load(recon_model_file_name))
                     model.init_with_pretrained(recon)
@@ -46,12 +48,12 @@ class ModelManager:
 
     def load_model(self, model, model_type):
         model_name = self.get_model_name(model_type)
-        file_name = self.opt['model_path'] + model_name
+        file_name = self.model_path + model_name
         model.load_state_dict(torch.load(file_name))
 
     def save_model(self, model, model_type):
         model_name = self.get_model_name(model_type)
-        file_name = self.opt['model_path'] + model_name
+        file_name = self.model_path + model_name
         ensure_directory_exist(file_name)
         torch.save(model.state_dict(), file_name)
 
@@ -61,8 +63,11 @@ class ModelManager:
         n_epoch = self.opt['n_epoch']
         n_sense = self.opt['n_sense']
         lr = self.opt['learning_rate']
+        dp = self.opt['dropout']
+        regu = self.opt['regu_strength']
         load_pretrain= 1 if self.opt['load_pretrained'] else 0
-        attributes = [model_type, 'D', embedding_dim, 'B', batch_size, 'S', n_sense, 'E', n_epoch, 'lr', lr, 'pre', load_pretrain]
+        attributes = [model_type, 'D', embedding_dim, 'B', batch_size, 'S', n_sense, 'E', n_epoch, 'lr', lr, \
+                      'dp', dp, 'regu', regu, 'pre', load_pretrain]
         model_name = format_list_to_string(attributes, '_')
         return model_name + '.model'
 
@@ -70,11 +75,11 @@ class ModelManager:
         embedding_dim = self.opt['embedding_dim']
         n_sense = self.opt['n_sense']
         if model_type == 'recon':
-            return Recon(x_vocab_size, embedding_dim, y_vocab_size)
+            return Recon(x_vocab_size, embedding_dim, y_vocab_size, self.dropout)
         elif model_type == 'attn':
             return AttnNet(x_vocab_size, embedding_dim, y_vocab_size)
         elif model_type == 'sense':
-            return SenseNet(x_vocab_size, embedding_dim, y_vocab_size, n_sense)
+            return SenseNet(x_vocab_size, embedding_dim, y_vocab_size, n_sense, self.dropout)
         elif model_type == 'bilinear_sense':
             return BilinearSenseNet(x_vocab_size, embedding_dim, y_vocab_size, n_sense)
         elif model_type == 'bidirection_sense':

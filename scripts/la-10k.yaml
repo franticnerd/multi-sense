@@ -6,55 +6,31 @@ grid_list: [50, 50]
 train_ratio: 0.7
 valid_ratio: 0.1
 min_token_freq: 10
-
-# training
-train_data_file: !join [*DIR, input/train.txt]
-test_data_file: !join [*DIR, input/test.txt]
-valid_data_file: !join [*DIR, input/test.txt]
-x_vocab_file: !join [*DIR, input/words.txt]
-y_vocab_file: !join [*DIR, input/locations.txt]
-train_log_file: !join [*DIR, output/train_log.txt]
-performance_file:  !join [*DIR, output/performance.txt]
-model_path: !join [*DIR, model/]
-case_seed_file: !join [*DIR, input/case_seeds.txt]
-case_output_file: !join [*DIR, output/case_outputs.txt]
-
-error_analysis_path: !join [*DIR, output/]
-error_instance_file: !join [*DIR, output/instance-]
-same_sense_file: !join [*DIR, output/same_sense.txt]
-
-classify_train_file: !join [*DIR, input/classify_train.txt]
-classify_test_file: !join [*DIR, input/classify_test.txt]
-classify_cat_file: !join [*DIR, input/classify_category.txt]
 classify_train_ratio: 0.8
 
 load_pretrained: False
-load_model: True
-save_model: True
+load_model: False
 data_worker: 4
 n_sense: 2
 embedding_dim: 50
 batch_size: 64
-n_epoch: 20
-print_gap: 50
+n_epoch: 5
 learning_rate: 0.005
-K: 10
+regu_strength: 0
+dropout: 0
 
 eval_dim: False
 dim_list: [25, 50, 100, 200, 150, 400]
-
 eval_batch: False
 batch_list: [8, 16, 64]
-
 eval_lr: False
 lr_list: [0.002, 0.008, 0.01]
-
 eval_sense: False
 n_sense_list: [3,4,5]
+eval_dp: True
+dp_list: [0.1, 0.5]
+eval_regu: True
+regu_list: [0.00001, 0.0001, 0.001, 0.01, 0.1]
 
-
-# the two models for error analysis comparison
-
-# model_type_list: ['recon', 'sense']
-model_type_list: ['sense']
-cmp_model_type_list: ['recon', 'bilinear_sense']
+model_type_list: ['recon', 'sense']
+cmp_model_type_list: ['recon', 'sense']

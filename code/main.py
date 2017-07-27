@@ -1,10 +1,12 @@
 import sys
 
 from dataset import DataSet
-from evaluator import Evaluator, CaseEvaluator
+from evaluator import Evaluator
+from analyzer import CaseAnalyzer
 from model_manager import ModelManager
 from paras import load_params
 from utils import set_random_seeds
+from instance_analyzer import InstanceAnalyzer
 
 def run_one_config(opt, model_type, case_study=False):
     set_random_seeds()
@@ -14,18 +16,18 @@ def run_one_config(opt, model_type, case_study=False):
     evaluator = Evaluator(opt)
     metrics = evaluator.eval(model, model_type, dataset.test_loader)
     evaluator.write_performance(model_type, metrics, train_time)
-    # if case_study:
-    #     case_evaluator = CaseEvaluator(model, dataset, opt)
-    #     case_evaluator.write_similar_sense()
-        # case_evaluator.run_case_study()
+    run_case_study(model, dataset, opt, case_study)
 
-def eval_error_analysis(opt):
-    try:
-        evaluator = Evaluator(opt)
-        evaluator.write_error_results(opt)
-    except:
-        print 'Compare model failed. Please check whether the given models exist.'
+def run_case_study(model, dataset, opt, case_study):
+    if not case_study:
         return
+    case_evaluator = CaseAnalyzer(model, dataset, opt)
+    case_evaluator.find_duplicate_sense_words()
+    case_evaluator.find_similar_words()
+
+def run_error_analysis(opt):
+    instance_analyzer = InstanceAnalyzer(opt)
+    instance_analyzer.write_error_results(opt)
 
 def eval_batch_size(opt, model_type):
     if not opt['eval_batch']:
@@ -65,15 +67,35 @@ def eval_n_sense(opt, model_type):
         run_one_config(opt, model_type)
     opt['n_sense'] = default_n_sense
 
+
+def eval_dropout(opt, model_type):
+    if not opt['eval_dp']:
+        return
+    default_dp = opt['dropout']
+    for dropout in opt['dp_list']:
+        opt['dropout'] = dropout
+        run_one_config(opt, model_type)
+    opt['dropout'] = default_dp
+
+def eval_regularization(opt, model_type):
+    if not opt['eval_regu']:
+        return
+    default_regu = opt['regu_strength']
+    for regu in opt['regu_list']:
+        opt['regu_strength'] = regu
+        run_one_config(opt, model_type)
+    opt['dropout'] = default_regu
+
 def main(opt):
     for model_type in opt['model_type_list']:
         run_one_config(opt, model_type, True)
-        # run_one_config(opt, model_type, True)
         # eval_learning_rate(opt, model_type)
         # eval_batch_size(opt, model_type)
         # eval_embedding_dim(opt, model_type)
         # eval_n_sense(opt, model_type)
-    # eval_error_analysis(opt)
+        eval_dropout(opt, model_type)
+        eval_regularization(opt, model_type)
+    run_error_analysis(opt)
 
 if __name__ == '__main__':
     # para_file = '../scripts/la-10k.yaml'

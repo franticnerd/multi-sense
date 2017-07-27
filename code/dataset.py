@@ -95,10 +95,11 @@ class Vocab:
 class ClassifyDataSet:
     def __init__(self, opt, model_type, model):
         n_sense = 1 if model_type in ['recon', 'attn'] else opt['n_sense']
-        train_file = opt['classify_train_file']
-        test_file = opt['classify_test_file']
         batch_size = opt['batch_size']
         n_worker = opt['data_worker']
+        input_dir = opt['data_dir'] + 'input/'
+        train_file = input_dir + 'classify_train.txt'
+        test_file = input_dir + 'classify_test.txt'
         # self.y_vocab = Vocab(y_vocab_file, n_sense)
         train_data = RelationData(train_file, n_sense, feature_id_offset=1)
         test_data = RelationData(test_file, n_sense, feature_id_offset=1)
@@ -113,7 +114,6 @@ class ClassifyDataSet:
             features.extend(batch_features)
             labels.extend(batch_labels)
         return features, labels
-
 
     # transform a data batch into features and labels
     def transform(self, data_batch, model):
@@ -130,13 +130,14 @@ class ClassifyDataSet:
 class DataSet:
     def __init__(self, opt, model_type):
         n_sense = 1 if model_type in ['recon', 'attn'] else opt['n_sense']
-        x_vocab_file = opt['x_vocab_file']
-        y_vocab_file = opt['y_vocab_file']
-        train_file = opt['train_data_file']
-        valid_file = opt['valid_data_file']
-        test_file = opt['test_data_file']
         batch_size = opt['batch_size']
         n_worker = opt['data_worker']
+        input_dir = opt['data_dir'] + 'input/'
+        x_vocab_file = input_dir + 'words.txt'
+        y_vocab_file = input_dir + 'locations.txt'
+        train_file = input_dir + 'train.txt'
+        valid_file = input_dir + 'test.txt'
+        test_file = input_dir + 'test.txt'
         # load the data
         self.x_vocab = Vocab(x_vocab_file, n_sense, id_offset=1)
         self.y_vocab = Vocab(y_vocab_file, 1)
@@ -144,6 +145,9 @@ class DataSet:
         train_data = RelationData(train_file, n_sense, feature_id_offset=1)
         valid_data = RelationData(valid_file, n_sense, feature_id_offset=1)
         test_data = RelationData(test_file, n_sense, feature_id_offset=1)
+        self.train_size = len(train_data)
+        self.vld_size = len(valid_data)
+        self.test_size = len(test_data)
         self.train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=n_worker)
         self.valid_loader = DataLoader(valid_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
         self.test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=n_worker)
