@@ -63,7 +63,7 @@ class Trainer:
         self.write_train_loss(epoch, avg_train_loss)
 
     def write_train_loss(self, epoch, avg_train_loss):
-        loss_info = '%20s [%d]  training loss: %.3f' % \
+        loss_info = '%20s [%d]  training loss: %.4f' % \
                     (self.model_type, epoch + 1, avg_train_loss)
         print loss_info
         append_to_file(self.train_log_file, loss_info)
@@ -71,7 +71,7 @@ class Trainer:
     # validate the model after each epoch, return the accuracy
     def validate_one_epoch(self, validation_data, epoch):
         accuracy, avg_valid_loss = self.evaluator.eval_accuracy_and_loss(self.model, validation_data)
-        validation_info = '%20s [%d]  validation accuracy: %.3f; loss: %.3f' % \
+        validation_info = '%20s [%d]  validation accuracy: %.4f; loss: %.4f' % \
                           (self.model_type, epoch + 1, accuracy, avg_valid_loss)
         metrics = self.evaluator.eval(self.model, self.model_type, validation_data)
         full_validation_info = format_list_to_string(['validation', metrics[:-1]], '\t')
