@@ -33,7 +33,7 @@ load_model: False
 save_model: True
 data_worker: 8
 n_sense: 2
-embedding_dim: 200
+embedding_dim: 300
 batch_size: 1024
 learning_rate: 0.005
 n_epoch: 20
@@ -54,6 +54,6 @@ n_sense_list: [3,4,5]
 
 # model_type_list: ['recon', 'attn', 'sense', 'attn_sense', 'comp_attn_sense', 'bilinear_sense']
 
-model_type_list: ['recon', 'sense']
+model_type_list: ['recon', 'sense', 'comp_attn_sense']
 # model_type_list: ['sense']
 cmp_model_type_list: ['recon', 'sense']
