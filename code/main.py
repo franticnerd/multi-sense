@@ -84,7 +84,7 @@ def eval_regularization(opt, model_type):
     for regu in opt['regu_list']:
         opt['regu_strength'] = regu
         run_one_config(opt, model_type)
-    opt['dropout'] = default_regu
+    opt['eval_regu'] = default_regu
 
 def main(opt):
     for model_type in opt['model_type_list']:
